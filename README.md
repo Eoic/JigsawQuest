@@ -1,4 +1,4 @@
-# JigsawQuest - multiplayer jigsaw puzzle solving game.
+## JigsawQuest - jigsaw puzzle solving game.
 
 ### Features 
 * **Play Solo or Multiplayer**: Choose to tackle puzzles on your own or invite friends to join you in multiplayer mode. Collaborate or compete to see who can solve the puzzle the fastest.
