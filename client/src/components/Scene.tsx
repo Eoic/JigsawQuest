@@ -1,10 +1,13 @@
+import Cursor from './Cursor';
 import { Viewport } from 'pixi-viewport';
 import { useEffect, useRef, useState } from 'react';
 import { Application, Graphics } from 'pixi.js';
+import { useWebSocketStore } from '../store';
 
 export const Scene = () => {
   const sceneRootRef = useRef<HTMLDivElement>(null);
   const [sceneData, setSceneData] = useState<{ app: Application | null; viewport: Viewport | null }>({ app: null, viewport: null });
+  const sendMessage = useWebSocketStore((state) => state.sendMessage);
 
   useEffect(() => {
     if (!sceneRootRef.current) {
@@ -47,8 +50,12 @@ export const Scene = () => {
     window.addEventListener('resize', handleResize);
 
     viewport.addEventListener('mousemove', (event) => {
-      console.log('Screen:', event.screen);
-      console.log('World:', viewport.toWorld({ x: event.screenX, y: event.screenY }));
+      const worldPoint = viewport.toWorld({ x: event.screenX, y: event.screenY });
+
+      sendMessage({
+        type: 'C_CURSOR_POSITION',
+        data: worldPoint,
+      });
     });
 
     const box = new Graphics();
@@ -57,8 +64,6 @@ export const Scene = () => {
     box.drawRect(0, 0, 1000, 1000);
     box.position.set(viewport.screenWidth / 2 - box.width / 2, viewport.screenHeight / 2 - box.height / 2);
     viewport.addChild(box);
-
-    console.log(viewport.center);
 
     let dragPoint = { x: 0, y: 0 };
 
@@ -107,6 +112,7 @@ export const Scene = () => {
   return (
     <>
       <div ref={sceneRootRef}></div>
+      {/* <Cursor point={point} /> */}
       <div className='scene-overlay-ui'>
         <button className='button square icon' title='Center' onClick={centerViewport} />
       </div>

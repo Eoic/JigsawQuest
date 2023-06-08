@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "perfect-cursors": "^1.0.5",
     "pixi-graphpaper": "^2.0.1",
     "pixi-viewport": "^5.0.1",
     "pixi.js": "^7.2.4",

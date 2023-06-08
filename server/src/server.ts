@@ -19,7 +19,7 @@ const broadcastUsernames = () => {
 
 router.get("/upgrade", async (context) => {
   const socket = await context.upgrade();
-  const username = context.request.url.searchParams.get("username");
+  const username = crypto.randomUUID()
 
   if (connections.has(username)) {
     socket.close(1008, `Username ${username} is already taken.`);
@@ -43,7 +43,10 @@ router.get("/upgrade", async (context) => {
   socket.onmessage = (message) => {
     const data = JSON.parse(message.data);
 
-    switch (data.event) {
+    switch (data.type) {
+      case 'C_CURSOR_POSITION':
+        console.log(data);
+        break;
       case "SEND_MESSAGE":
         broadcast(
           JSON.stringify({
