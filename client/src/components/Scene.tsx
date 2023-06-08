@@ -2,12 +2,13 @@ import { Viewport } from 'pixi-viewport';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Graphics } from 'pixi.js';
 import { useSceneStore, useWebSocketStore } from '../store';
+import Cursor from './Cursor';
 
 export const Scene = () => {
   const sceneRootRef = useRef<HTMLDivElement>(null);
-  const [sceneData, setSceneData] = useState<{ app: Application | null; viewport: Viewport | null }>({ app: null, viewport: null });
+  const viewportRef = useRef<Viewport | null>(null);
   const { sendMessage, connection } = useWebSocketStore();
-  const { users, addUser, removeUser } = useSceneStore();
+  const { users, addUser, removeUser, updateUserCursor } = useSceneStore();
 
   const handleMessage = useCallback((event: Event) => {
     const data = JSON.parse(event.data);
@@ -22,11 +23,17 @@ export const Scene = () => {
         });
       });
       break;
+    
     case 'S_USER_DISCONNECTED':
       console.log('User disconnected', data.payload);
       removeUser(data.payload);
       break;
-    }
+
+    case 'S_CURSOR_POSITION':
+      console.log(viewportRef.current?.toScreen(data.payload.point));
+      updateUserCursor(data.payload.user, viewportRef.current?.toScreen(data.payload.point));
+      break;
+    }   
   }, [addUser, removeUser]);
 
   useEffect(() => {
@@ -70,12 +77,15 @@ export const Scene = () => {
     window.addEventListener('resize', handleResize);
 
     viewport.addEventListener('mousemove', (event) => {
-      const worldPoint = viewport.toWorld({ x: event.screenX, y: event.screenY });
 
-      sendMessage({
-        type: 'C_CURSOR_POSITION',
-        data: worldPoint,
-      });
+      if (Date.now() % 10 === 0) {
+        const worldPoint = viewport.toWorld({ x: event.screenX, y: event.screenY });
+
+        sendMessage({
+          type: 'C_CURSOR_POSITION',
+          data: worldPoint,
+        });
+      }
     });
 
     const box = new Graphics();
@@ -110,7 +120,7 @@ export const Scene = () => {
     box.on('pointerup', onDragEnd);
     box.on('pointerupoutside', onDragEnd);
 
-    setSceneData({ app, viewport });
+    viewportRef.current = viewport;
 
     return () => {
       box.off('pointerdown', onDragStart);
@@ -130,17 +140,18 @@ export const Scene = () => {
   }, [connection, handleMessage]);
 
   const centerViewport = () => {
-    if (!sceneData.viewport) {
+    if (!viewportRef.current) {
       return;
     }
 
-    sceneData.viewport.moveCenter({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    viewportRef.current.moveCenter({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   };
 
   return (
     <>
       <div ref={sceneRootRef}></div>
-      {/* <Cursor point={point} /> */}
+      {[...users.values()].map((user) => (<Cursor key={user.id} point={[user.cursorPosition.x, user.cursorPosition.y]} />))}
+      
       <div className='scene-overlay-ui'>
         <button className='button square icon' title='Center' onClick={centerViewport} />
 

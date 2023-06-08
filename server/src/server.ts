@@ -37,11 +37,14 @@ router.get("/upgrade", async (context) => {
   };
 
   socket.onmessage = (message) => {
-    const data = JSON.parse(message.data);
+    const payload = JSON.parse(message.data);
 
-    switch (data.type) {
+    switch (payload.type) {
       case 'C_CURSOR_POSITION':
-        console.log(data);
+        broadcast(JSON.stringify({
+          type: 'S_CURSOR_POSITION',
+          payload: { point: payload.data, user: socket.username }
+        }))
         break;
 
       default:

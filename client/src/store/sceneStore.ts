@@ -11,6 +11,7 @@ interface SceneState {
   addUser: (user: SceneUser) => void;
   removeUser: (userId: string) => void;
   getUser: (userId: string) => void;
+  updateUserCursor: (userId: string, cursorPosition: { x: number; y: number }) => void;
 }
 
 export default create<SceneState>()((set, get) => ({
@@ -26,5 +27,16 @@ export default create<SceneState>()((set, get) => ({
   }),
   getUser: (userId: string) => {
     return get().users.get(userId);
-  }
+  },
+  updateUserCursor: (userId, cursorPosition) => set((state) => {
+    const user = get().users.get(userId);
+
+    if (!user || !cursorPosition) {
+      return state;
+    }
+
+    user.cursorPosition = cursorPosition;
+    const users = new Map(state.users).set(user.id, user);
+    return { ...state, users };
+  }),
 }));
