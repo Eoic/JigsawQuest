@@ -19,6 +19,7 @@ const Initializer = () => {
     webSocket.addEventListener('close', handleConnectionClose);
 
     return () => {
+      webSocket.close();
       webSocket?.removeEventListener('open', handleConnectionOpen);
       webSocket?.removeEventListener('close', handleConnectionClose);
     };

@@ -6,15 +6,12 @@ const router = new Router();
 const app = new Application();
 const connections = new Map();
 
-const broadcast = (message) => {
+const broadcast = (message: any) => {
   for (const connection of connections.values()) {
-    connection.send(message);
+    if (connection.readyState === 1) {
+      connection.send(message);
+    }
   }
-};
-
-const broadcastUsernames = () => {
-  const usernames = [...connections.keys()];
-  broadcast(JSON.stringify({ usernames, event: "UPDATE_USERS" }));
 };
 
 router.get("/upgrade", async (context) => {
@@ -27,17 +24,16 @@ router.get("/upgrade", async (context) => {
 
   socket.username = username;
   connections.set(username, socket);
-
   console.log(`New client connected: ${username}.`);
  
   socket.onopen = () => {
-    broadcastUsernames();
+    broadcast(JSON.stringify({ type: 'S_CONNECTED_USERS', payload: [...connections.keys()] }));
   };
 
   socket.onclose = () => {
     console.log(`Client ${username} closed connection.`);
     connections.delete(username);
-    broadcastUsernames();
+    broadcast(JSON.stringify({ type: 'S_USER_DISCONNECTED', payload: username }));
   };
 
   socket.onmessage = (message) => {
@@ -46,15 +42,6 @@ router.get("/upgrade", async (context) => {
     switch (data.type) {
       case 'C_CURSOR_POSITION':
         console.log(data);
-        break;
-      case "SEND_MESSAGE":
-        broadcast(
-          JSON.stringify({
-            event: "SEND_MESSAGE",
-            username: socket.username,
-            message: data.message,
-          }),
-        );
         break;
 
       default:

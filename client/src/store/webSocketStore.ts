@@ -17,11 +17,10 @@ export default create<WebSocketState>()((set, get) => ({
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    get().connection!.send(JSON.stringify(message));
+    get().connection?.send(JSON.stringify(message));
   },
   setConnection: (connection: WebSocket | null) => set(() => ({ 
     connection,
     isConnected: !!connection
-  }))
+  })),
 }));

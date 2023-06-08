@@ -1,13 +1,33 @@
-import Cursor from './Cursor';
 import { Viewport } from 'pixi-viewport';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Graphics } from 'pixi.js';
-import { useWebSocketStore } from '../store';
+import { useSceneStore, useWebSocketStore } from '../store';
 
 export const Scene = () => {
   const sceneRootRef = useRef<HTMLDivElement>(null);
   const [sceneData, setSceneData] = useState<{ app: Application | null; viewport: Viewport | null }>({ app: null, viewport: null });
-  const sendMessage = useWebSocketStore((state) => state.sendMessage);
+  const { sendMessage, connection } = useWebSocketStore();
+  const { users, addUser, removeUser } = useSceneStore();
+
+  const handleMessage = useCallback((event: Event) => {
+    const data = JSON.parse(event.data);
+
+    switch (data.type) {
+    case 'S_CONNECTED_USERS':
+      data.payload.forEach((username) => {
+        addUser({
+          id: username,
+          username,
+          cursorPosition: { x: 0, y: 0 },
+        });
+      });
+      break;
+    case 'S_USER_DISCONNECTED':
+      console.log('User disconnected', data.payload);
+      removeUser(data.payload);
+      break;
+    }
+  }, [addUser, removeUser]);
 
   useEffect(() => {
     if (!sceneRootRef.current) {
@@ -99,7 +119,15 @@ export const Scene = () => {
       app.destroy(true);
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [sendMessage]);
+
+  useEffect(() => {
+    if (connection) {
+      connection.addEventListener('message', handleMessage);
+    }
+
+    return () => connection?.removeEventListener('message', handleMessage);
+  }, [connection, handleMessage]);
 
   const centerViewport = () => {
     if (!sceneData.viewport) {
@@ -115,6 +143,14 @@ export const Scene = () => {
       {/* <Cursor point={point} /> */}
       <div className='scene-overlay-ui'>
         <button className='button square icon' title='Center' onClick={centerViewport} />
+
+        <div style={{ marginTop: 8 }}>
+          <b> Connected users ({ users.size }) </b>
+
+          <ul>
+            {[...users.values()].map((user) => (<li key={user.username}> {user.username} </li>))}
+          </ul>
+        </div>
       </div>
     </>
   );
