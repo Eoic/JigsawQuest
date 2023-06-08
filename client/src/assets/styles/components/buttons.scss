@@ -1,0 +1,17 @@
+.button {
+    border-radius: 5px;
+    padding: 4px 8px;
+    cursor: pointer;
+    border: 1px solid rgb(126, 115, 115);
+    background-color: rgba(131, 131, 131, 0.65);
+    transition: background-color 0.25s ease-in-out;
+
+    &:hover {
+        background-color: rgba(131, 131, 131, 1);
+    }
+
+    &.square {
+        width: 36px;
+        height: 36px;
+    }
+}

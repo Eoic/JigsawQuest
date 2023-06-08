@@ -18,3 +18,11 @@ html, body {
     margin: 0;
     padding: 0;
 }
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+
+@import './components/scene.scss';
+@import './components/icons.scss';
+@import './components/buttons.scss';
