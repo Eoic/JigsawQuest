@@ -29,7 +29,7 @@ router.get("/upgrade", async (context) => {
   connections.set(username, socket);
 
   console.log(`New client connected: ${username}.`);
-
+ 
   socket.onopen = () => {
     broadcastUsernames();
   };

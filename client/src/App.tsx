@@ -1,7 +1,11 @@
+import { Scene } from './components/Scene';
+import { Initializer } from './components/common';
+
 const App = () => {
   return (
     <>
-      Jigsaw Quest
+      <Initializer />
+      <Scene/>
     </>
   );
 };
