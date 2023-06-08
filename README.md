@@ -1,4 +1,4 @@
-Welcome to the JigsawQuest, a thrilling online experience that brings the joy of solving jigsaw puzzles to your browser. With a variety of exciting features and options, this game offers endless entertainment for puzzle enthusiasts of all ages.
+# JigsawQuest - multiplayer jigsaw puzzle solving game.
 
 ### Features 
 * **Play Solo or Multiplayer**: Choose to tackle puzzles on your own or invite friends to join you in multiplayer mode. Collaborate or compete to see who can solve the puzzle the fastest.
