@@ -2,8 +2,7 @@ import { create } from 'zustand';
 
 type SceneUser = {
   id: string;
-  username: string;
-  cursorPosition: { x: number, y: number };
+  position: { x: number, y: number };
 };
 
 interface SceneState {
@@ -11,7 +10,7 @@ interface SceneState {
   addUser: (user: SceneUser) => void;
   removeUser: (userId: string) => void;
   getUser: (userId: string) => void;
-  updateUserCursor: (userId: string, cursorPosition: { x: number; y: number }) => void;
+  updateUserCursor: (userId: string, position: { x: number; y: number }) => void;
 }
 
 export default create<SceneState>()((set, get) => ({
@@ -28,14 +27,14 @@ export default create<SceneState>()((set, get) => ({
   getUser: (userId: string) => {
     return get().users.get(userId);
   },
-  updateUserCursor: (userId, cursorPosition) => set((state) => {
+  updateUserCursor: (userId, position) => set((state) => {
     const user = get().users.get(userId);
 
-    if (!user || !cursorPosition) {
+    if (!user || !position) {
       return state;
     }
 
-    user.cursorPosition = cursorPosition;
+    user.position = position;
     const users = new Map(state.users).set(user.id, user);
     return { ...state, users };
   }),

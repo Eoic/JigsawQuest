@@ -1,8 +1,9 @@
-import { Viewport } from 'pixi-viewport';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Application, Graphics } from 'pixi.js';
-import { useSceneStore, useWebSocketStore } from '../store';
 import Cursor from './Cursor';
+import { Viewport } from 'pixi-viewport';
+import { Application, Graphics } from 'pixi.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSceneStore, useWebSocketStore } from '../store';
+import { ServerMessage } from '../types/webSocket';
 
 export const Scene = () => {
   const sceneRootRef = useRef<HTMLDivElement>(null);
@@ -10,31 +11,35 @@ export const Scene = () => {
   const { sendMessage, connection } = useWebSocketStore();
   const { users, addUser, removeUser, updateUserCursor } = useSceneStore();
 
-  const handleMessage = useCallback((event: Event) => {
-    const data = JSON.parse(event.data);
+  const handleMessage = useCallback((event: MessageEvent) => {
+    const data: ServerMessage = JSON.parse(event.data);
 
     switch (data.type) {
     case 'S_CONNECTED_USERS':
-      data.payload.forEach((username) => {
+      data.payload.users.forEach((user) => {
         addUser({
-          id: username,
-          username,
-          cursorPosition: { x: 0, y: 0 },
+          id: user.userId,
+          position: user.position,
         });
       });
       break;
-    
+
+    case 'S_USER_CONNECTED':
+      addUser({
+        id: data.payload.userId,
+        position: { x: 0, y: 0},
+      });
+      break;
+
     case 'S_USER_DISCONNECTED':
-      console.log('User disconnected', data.payload);
-      removeUser(data.payload);
+      removeUser(data.payload.userId);
       break;
 
     case 'S_CURSOR_POSITION':
-      console.log(viewportRef.current?.toScreen(data.payload.point));
-      updateUserCursor(data.payload.user, viewportRef.current?.toScreen(data.payload.point));
+      updateUserCursor(data.payload.userId, viewportRef.current?.toScreen(data.payload.position) || { x: 0, y: 0 });
       break;
     }   
-  }, [addUser, removeUser]);
+  }, [addUser, removeUser, updateUserCursor]);
 
   useEffect(() => {
     if (!sceneRootRef.current) {
@@ -83,7 +88,9 @@ export const Scene = () => {
 
         sendMessage({
           type: 'C_CURSOR_POSITION',
-          data: worldPoint,
+          payload: {
+            position: worldPoint,
+          }
         });
       }
     });
@@ -150,7 +157,7 @@ export const Scene = () => {
   return (
     <>
       <div ref={sceneRootRef}></div>
-      {[...users.values()].map((user) => (<Cursor key={user.id} point={[user.cursorPosition.x, user.cursorPosition.y]} />))}
+      {[...users.values()].map((user) => (<Cursor key={user.id} point={[user.position.x, user.position.y]} />))}
       
       <div className='scene-overlay-ui'>
         <button className='button square icon' title='Center' onClick={centerViewport} />
@@ -159,7 +166,7 @@ export const Scene = () => {
           <b> Connected users ({ users.size }) </b>
 
           <ul>
-            {[...users.values()].map((user) => (<li key={user.username}> {user.username} </li>))}
+            {[...users.values()].map((user) => (<li key={user.id}> {user.id} </li>))}
           </ul>
         </div>
       </div>

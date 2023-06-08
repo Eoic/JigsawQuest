@@ -8,6 +8,7 @@ enum WebSocketStatus {
 type WebSocketConnection = {
   id: string;
   socket: WebSocket;
+  position: { x: number; y: number };
 };
 
 // Client messages.
@@ -47,12 +48,26 @@ type S_UserDisconnected = {
   };
 };
 
-type ServerMessage = S_CursorPosition | S_UserConnected | S_UserDisconnected;
+type S_ConnectedUsers = {
+  type: 'S_CONNECTED_USERS';
+  payload: {
+    users: {
+      userId: string;
+      position: {
+        x: number;
+        y: number;
+      };
+    }[];
+  };
+};
+
+type ServerMessage = S_CursorPosition | S_UserConnected | S_UserDisconnected | S_ConnectedUsers;
 type ClientMessage = C_CursorPosition;
 
 export type {
   C_CursorPosition,
   ClientMessage,
+  S_ConnectedUsers,
   S_CursorPosition,
   S_UserConnected,
   S_UserDisconnected,
