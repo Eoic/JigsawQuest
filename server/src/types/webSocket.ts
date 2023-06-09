@@ -5,21 +5,21 @@ enum WebSocketStatus {
 }
 
 // Data types.
+type CursorPosition = {
+  x: number;
+  y: number;
+};
+
 type WebSocketConnection = {
   id: string;
   socket: WebSocket;
-  position: { x: number; y: number };
+  position: CursorPosition;
 };
 
 // Client messages.
 type C_CursorPosition = {
   type: 'C_CURSOR_POSITION';
-  payload: {
-    position: {
-      x: number;
-      y: number;
-    };
-  };
+  payload: { position: CursorPosition };
 };
 
 // Server messages.
@@ -27,25 +27,18 @@ type S_CursorPosition = {
   type: 'S_CURSOR_POSITION';
   payload: {
     userId: string;
-    position: {
-      x: number;
-      y: number;
-    };
+    position: CursorPosition;
   };
 };
 
 type S_UserConnected = {
   type: 'S_USER_CONNECTED';
-  payload: {
-    userId: string;
-  };
+  payload: { userId: string };
 };
 
 type S_UserDisconnected = {
   type: 'S_USER_DISCONNECTED';
-  payload: {
-    userId: string;
-  };
+  payload: { userId: string };
 };
 
 type S_ConnectedUsers = {
@@ -53,10 +46,7 @@ type S_ConnectedUsers = {
   payload: {
     users: {
       userId: string;
-      position: {
-        x: number;
-        y: number;
-      };
+      position: CursorPosition;
     }[];
   };
 };

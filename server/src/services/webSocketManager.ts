@@ -14,6 +14,10 @@ class WebSocketManager {
     this.connections = new Map();
   }
 
+  /**
+   * Adds a new connection to a map.
+   * @param socket WebSocket connection. 
+   */
   addConnection(socket: WebSocket) {
     const id = crypto.randomUUID();
     socket.onopen = (event: Event) => this.handleOpen(event, id);
@@ -23,6 +27,11 @@ class WebSocketManager {
     this.connections.set(id, { id, socket, position: { x: 0, y: 0 } });
   }
 
+  /**
+   * Removes connection from the map and broadcasts 'S_USER_DISCONNECTED' event 
+   * to all currently connected users.
+   * @param connection WebSocket connection wrapper object.
+   */
   removeConnection(connection: WebSocketConnection) {
     this.connections.delete(connection.id);
     this.sendBroadcast({
@@ -31,6 +40,12 @@ class WebSocketManager {
     });
   }
 
+  /**
+   * Send a given message to all connected users, except for connections listed 
+   * in `exludedConnections` list, if any are provided.
+   * @param message Message to be sent.
+   * @param excludedConnections List of connection ids of connections which should not receive the boroadcast.
+   */
   sendBroadcast(message: ServerMessage, excludedConnections: string[] = []) {
     const data = JSON.stringify(message);
 
@@ -48,6 +63,11 @@ class WebSocketManager {
     }
   }
 
+  /**
+   * Sends message to a connection, identified by connection id.
+   * @param message Message to be sent.
+   * @param connectionId Identifier associated with the connection.
+   */
   sendMessage(message: ServerMessage, connectionId: string) {
     const connection = this.connections.get(connectionId);
 
@@ -65,6 +85,11 @@ class WebSocketManager {
     connection.socket.send(data);
   }
 
+  /**
+   * Handler for 'open' event for socket object.
+   * @param _event 'open' event data.
+   * @param connectionId Identifier associated with the connection.
+   */
   handleOpen(_event: Event, connectionId: string) {
     const userConnectedMessage: S_UserConnected = {
       type: 'S_USER_CONNECTED',
@@ -85,6 +110,11 @@ class WebSocketManager {
     this.sendMessage(connectedUsersMessage, connectionId);
   }
 
+  /**
+   * Handler for 'close' event for socket object.
+   * @param _event 'close' event data.
+   * @param connectionId Identifier associated with the connection.
+   */
   handleClose(_event: CloseEvent, connectionId: string) {
     const connection = this.connections.get(connectionId);
 
@@ -97,6 +127,11 @@ class WebSocketManager {
     this.removeConnection(connection);
   }
 
+  /**
+   * Handler for 'error' event for socket object.
+   * @param _event 'error' event data.
+   * @param connectionId Identifier associated with the connection.
+   */
   handleError(_event: Event, connectionId: string) {
     const connection = this.connections.get(connectionId);
 
@@ -106,6 +141,11 @@ class WebSocketManager {
     }
   }
 
+  /**
+   * Handler for 'message' event for socket object.
+   * @param _event 'message' event data.
+   * @param connectionId Identifier associated with the connection.
+   */
   handleMessage(event: MessageEvent, connectionId: string) {
     const message: ClientMessage = JSON.parse(event.data);
     const connection = this.connections.get(connectionId);
