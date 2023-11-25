@@ -44,6 +44,7 @@ type S_ConnectedUsers = {
         x: number;
         y: number;
       };
+      isOwner: boolean;
     }[];
   };
 };

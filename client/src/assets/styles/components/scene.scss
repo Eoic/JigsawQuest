@@ -11,4 +11,11 @@
     & > * {
         pointer-events: initial;
     }
+
+    .panel {
+        border-radius: 5px;
+        background-color: #7c9495ae;
+        padding: 8px;
+        display: inline-block;
+    }
 }

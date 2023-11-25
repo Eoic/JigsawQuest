@@ -3,6 +3,7 @@ import { create } from 'zustand';
 type SceneUser = {
   id: string;
   position: { x: number, y: number };
+  isOwner: boolean;
 };
 
 interface SceneState {

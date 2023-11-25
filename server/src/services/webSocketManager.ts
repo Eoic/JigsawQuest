@@ -16,7 +16,7 @@ class WebSocketManager {
 
   /**
    * Adds a new connection to a map.
-   * @param socket WebSocket connection. 
+   * @param socket WebSocket connection.
    */
   addConnection(socket: WebSocket) {
     const id = crypto.randomUUID();
@@ -28,8 +28,8 @@ class WebSocketManager {
   }
 
   /**
-   * Removes connection from the map and broadcasts 'S_USER_DISCONNECTED' event 
-   * to all currently connected users.
+   * Removes connection from the map and broadcasts
+   * 'S_USER_DISCONNECTED' event to all currently connected users.
    * @param connection WebSocket connection wrapper object.
    */
   removeConnection(connection: WebSocketConnection) {
@@ -41,7 +41,7 @@ class WebSocketManager {
   }
 
   /**
-   * Send a given message to all connected users, except for connections listed 
+   * Send a given message to all connected users, except for connections listed
    * in `exludedConnections` list, if any are provided.
    * @param message Message to be sent.
    * @param excludedConnections List of connection ids of connections which should not receive the boroadcast.
@@ -102,6 +102,7 @@ class WebSocketManager {
         users: [...this.connections.values()].map((connection) => ({
           userId: connection.id,
           position: connection.position,
+          isOwner: connection.id === connectionId,
         })),
       },
     };

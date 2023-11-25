@@ -47,6 +47,7 @@ type S_ConnectedUsers = {
     users: {
       userId: string;
       position: CursorPosition;
+      isOwner: boolean;
     }[];
   };
 };
