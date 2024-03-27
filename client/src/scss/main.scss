@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Open+Sans&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-size: 16px;
+}
+
+.panel {
+  position: absolute;
+  color: aliceblue;
+  background-color: rgba(39, 3, 75, 0.85);
+  font-size: 1rem;
+  font-family: 'Open Sans', sans-serif;
+  padding: 8px 16px;
+}
