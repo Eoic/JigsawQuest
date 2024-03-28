@@ -1,10 +1,11 @@
 import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
+import {Assets, Loader, Texture} from "pixi.js";
 
 export class Scene {
-    private viewport: Viewport;
-    private app: PIXI.Application<HTMLCanvasElement>;
+    private readonly viewport: Viewport;
+    private readonly app: PIXI.Application<HTMLCanvasElement>;
 
     constructor() {
         this.app = this.setupApp(document.body);
@@ -59,12 +60,26 @@ export class Scene {
     }
 
     private setupEntities() {
-        const shape = new PIXI.Sprite(PIXI.Texture.WHITE);
-        shape.tint = 0xFF0FFA;
-        shape.width = 256;
-        shape.height = 256;
-        shape.position.set(0, 0);
-        this.viewport.addChild(shape);
+        PIXI.Assets.load('puzzle.png').then((texture) => {
+            const size = 100;
+            const gap = 15;
+
+            console.log(this.viewport.screenWidth / 2 - 500)
+
+            for (let x = 0; x < 10; x++) {
+                for (let y = 0; y < 10; y++) {
+                    const rectangle = new PIXI.Rectangle(size * x, size * y, size, size);
+                    const piece = new Texture(texture, rectangle);
+                    const pieceSprite = new PIXI.Sprite(piece);
+                    pieceSprite.position.set(x * (size + gap), y * (size + gap));
+                    this.viewport.addChild(pieceSprite);
+                }
+            }
+
+            this.viewport.moveCenter(this.viewport.screenWidth / 2, this.viewport.screenHeight / 2);
+        }).catch((error) => {
+            console.error(error);
+        });
     }
 
     private handleResize(): void {
