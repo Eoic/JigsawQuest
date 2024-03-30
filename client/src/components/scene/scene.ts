@@ -3,7 +3,7 @@ import { Viewport } from 'pixi-viewport';
 import { OutlineFilter } from "@pixi/filter-outline";
 import { BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
 
-const HOVER_FILTER: OutlineFilter = new OutlineFilter(1, 0x99FF9A);
+const HOVER_FILTER: OutlineFilter = new OutlineFilter(0.85, 0x99FF9A);
 
 class ActiveDraggable {
     public static Z_INDEX_TOP = 1000;
@@ -52,6 +52,10 @@ export class Scene {
     private readonly app: PIXI.Application<HTMLCanvasElement>;
     private activeDraggable: ActiveDraggable | null = null;
 
+    private selectionBox: PIXI.Graphics | null = null;
+    private selectionOrigin: { x: number, y: number } = null;
+    private isBoxSelecting: boolean = false;
+
     constructor() {
         this.app = this.setupApp(document.body);
         this.viewport = this.setupViewport(this.app);
@@ -61,6 +65,11 @@ export class Scene {
         this.handleDragEnd = this.handleDragEnd.bind(this);
         this.handleHoverStart = this.handleHoverStart.bind(this);
         this.handleHoverEnd = this.handleHoverEnd.bind(this);
+
+        // Selection box.
+        this.selectionBox = new PIXI.Graphics();
+        this.selectionBox.alpha = 0.4;
+        this.app.stage.addChild(this.selectionBox);
     }
 
     private setupApp(container: HTMLElement): PIXI.Application<HTMLCanvasElement> {
@@ -71,6 +80,7 @@ export class Scene {
             width: window.innerWidth,
             height: window.innerHeight,
             backgroundColor: BACKGROUND_COLOR,
+            resolution: 2,
         }) as PIXI.Application<HTMLCanvasElement>;
 
         container.appendChild(app.view);
@@ -85,12 +95,13 @@ export class Scene {
             worldWidth: WORLD_WIDTH,
             worldHeight: WORLD_HEIGHT,
             events: app.renderer.events,
+            disableOnContextMenu: true,
         });
 
         app.stage.addChild(viewport);
 
         viewport
-            .drag()
+            .drag({ mouseButtons: 'middle-right' })
             .pinch()
             .wheel()
             .clampZoom({
@@ -106,6 +117,47 @@ export class Scene {
 
     private setupEvents() {
         window.addEventListener('resize', this.handleResize.bind(this));
+        document.body.addEventListener('mousedown', (event) => {
+            if (event.button === 1) {
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        this.app.renderer.view.addEventListener('pointerdown', (event) => {
+            if (this.activeDraggable || !this.selectionBox || event.button !== 0)
+                return;
+
+            this.isBoxSelecting = true;
+            this.selectionOrigin = { x: event.clientX, y: event.clientY };
+            this.selectionBox.clear();
+            this.selectionBox.beginFill(0x2378A9);
+            this.selectionBox.drawRect(event.clientX, event.clientY, 5, 5);
+            this.selectionBox.endFill();
+        });
+
+        this.app.renderer.view.addEventListener('pointermove', (event) => {
+            if (!this.isBoxSelecting || !this.selectionBox)
+                return;
+
+            this.selectionBox.clear();
+            this.selectionBox.lineStyle({ width: 1, color: 0x99CDEA });
+            this.selectionBox.beginFill(0x2378A9);
+            const width = Math.abs(this.selectionOrigin.x - event.clientX);
+            const height = Math.abs(this.selectionOrigin.y - event.clientY);
+            this.selectionBox.drawRect(Math.min(this.selectionOrigin.x, event.clientX), Math.min(this.selectionOrigin.y, event.clientY), width, height);
+            this.selectionBox.endFill();
+        })
+
+        this.app.renderer.view.addEventListener('pointerup', (event) => {
+            this.isBoxSelecting = false;
+            this.selectionBox?.clear();
+        });
+
+        // this.app.renderer.view.addEventListener('pointerupoutside', (event) => {
+        //     this.isBoxSelecting = false;
+        //     this.selectionBox?.clear();
+        // });
     }
 
     private setupEntities() {
@@ -146,10 +198,12 @@ export class Scene {
             container.position.set(offsetX, offsetY);
             this.viewport.addChild(container);
         }).catch((error) => console.error(error));
-
     }
 
     private handleDragStart(event: PIXI.FederatedPointerEvent): void {
+        if (event.button !== 0)
+            return;
+
         event.stopPropagation();
         const parentPosition = event.getLocalPosition(this.viewport);
         this.activeDraggable = new ActiveDraggable(event.target as PIXI.DisplayObject);
@@ -176,14 +230,14 @@ export class Scene {
     }
 
     private handleHoverStart(event: PIXI.FederatedPointerEvent) {
-        if (this.activeDraggable)
+        if (this.activeDraggable || this.isBoxSelecting)
             return;
 
         event.target.filters = [HOVER_FILTER];
     }
 
     private handleHoverEnd(event: PIXI.FederatedPointerEvent) {
-        if (this.activeDraggable)
+        if (this.activeDraggable || this.isBoxSelecting)
             return;
 
         event.target.filters = [];
