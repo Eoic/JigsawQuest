@@ -4,6 +4,11 @@ import { PuzzlePiece } from '../../entities/puzzle-piece.ts';
 import { SelectionBox } from '../../entities/selection-box.ts';
 import { BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
 
+// TODO:
+// * Should recompute puzzle container bounds on scene zoom and drag.
+// * Move puzzle piece management into a separate class `Puzzle`, which extends PIXI.Container class.
+// * Implement ability to drag multiple puzzle pieces after selection with selection box (wrap active selection within the container?).
+
 export class Scene {
     private readonly _viewport: Viewport;
     private readonly _app: PIXI.Application<HTMLCanvasElement>;
@@ -119,6 +124,7 @@ export class Scene {
 
             container.position.set(offsetX, offsetY);
             this._viewport.addChild(container);
+            container.getBounds(); // (Temp) To compute bounds of children object. This should be `Puzzle` clas instance, which is a container.
         }).catch((error) => console.error(error));
     }
 
@@ -126,7 +132,7 @@ export class Scene {
         if (this._activeDraggable || event.button !== 0)
             return;
 
-        this._selectionBox.beginSelecting(new PIXI.Point(event.clientX, event.clientY ));
+        this._selectionBox.beginSelecting(new PIXI.Point(event.clientX, event.clientY ), this._puzzlePieces);
     }
 
     private handleAppPointerMove(event: PointerEvent) {
@@ -150,8 +156,11 @@ export class Scene {
         event.stopPropagation();
         const parentPosition = event.getLocalPosition(this._viewport);
         this._activeDraggable = this._puzzlePieces.get(event.target.uid) || null;
-        this._activeDraggable.startDrag(parentPosition);
-        this._viewport.on('pointermove', this.handleDrag);
+
+        if (this._activeDraggable) {
+            this._activeDraggable.startDrag(parentPosition);
+            this._viewport.on('pointermove', this.handleDrag);
+        }
     }
 
     private handleDrag(event: PIXI.FederatedPointerEvent) {
@@ -176,14 +185,20 @@ export class Scene {
         if (this._activeDraggable || this._selectionBox.isActive)
             return;
 
-        (event.target as PIXI.Sprite).filters = [PuzzlePiece.HOVER_FILTER];
+        if (!(event.target instanceof PuzzlePiece))
+            return;
+
+        event.target.startHover();
     }
 
     private handleHoverEnd(event: PIXI.FederatedPointerEvent) {
         if (this._activeDraggable || this._selectionBox.isActive)
             return;
 
-        (event.target as PIXI.Sprite).filters = [];
+        if (!(event.target instanceof PuzzlePiece))
+            return;
+
+        event.target.endHover();
     }
 
     private handleWindowResize(): void {
