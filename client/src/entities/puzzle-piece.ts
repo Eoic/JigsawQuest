@@ -1,10 +1,9 @@
-import { OutlineFilter } from '@pixi/filter-outline';
-import { Sprite, Point, Texture, utils } from 'pixi.js';
+import {Sprite, Point, Texture, utils, Color} from 'pixi.js';
 
 export class PuzzlePiece extends Sprite{
     public static Z_INDEX_TOP = 1000;
-    public static SELECT_FILTER = new OutlineFilter(0.85, 0x99FF9A);
-    public static HOVER_FILTER = new OutlineFilter(0.85, 0x99FF9A);
+    // public static SELECT_FILTER = new OutlineFilter(2, 0x99FF9A);
+    // public static HOVER_FILTER = new OutlineFilter(2, 0x99FF9A);
 
     private readonly _uid: number;
     private readonly _zIndexOriginal: number;
@@ -24,43 +23,66 @@ export class PuzzlePiece extends Sprite{
         this.eventMode = 'dynamic';
     }
 
-    select() {
+    public select() {
+        if (this._isSelected)
+            return;
+
         this.zIndex = PuzzlePiece.Z_INDEX_TOP;
-        this.filters = [PuzzlePiece.SELECT_FILTER];
+        this.tint = new Color(0x000FFF);
+        // this._addFilters(PuzzlePiece.SELECT_FILTER);
         this._isSelected = true;
     }
 
-    deselect() {
-        this.filters = [];
+    public deselect() {
+        if (!this._isSelected)
+            return;
+
         this.zIndex = this._zIndexOriginal;
+        this.tint = new Color(0xFFFFFF);
+        // this._removeFilters(PuzzlePiece.SELECT_FILTER);
         this._isSelected = false;
     }
 
-    startDrag(parentPosition: Point) {
+    public startDrag(parentPosition: Point) {
         this.zIndex = PuzzlePiece.Z_INDEX_TOP;
         this._dragPosition.set(parentPosition.x - this.x, parentPosition.y - this.y);
     }
 
-    drag(parentPosition: Point) {
+    public drag(parentPosition: Point) {
         this.x = parentPosition.x - this._dragPosition.x;
         this.y = parentPosition.y - this._dragPosition.y;
     }
 
-    endDrag() {
+    public endDrag() {
         this.zIndex = this._zIndexOriginal;
     }
 
-    startHover() {
+    public startHover() {
         if (this._isSelected)
             return;
 
-        this.filters = [PuzzlePiece.HOVER_FILTER];
+        this.tint = new Color(0xFFF000);
     }
 
-    endHover() {
+    public endHover() {
         if (this._isSelected)
             return;
 
-        this.filters = [];
+        this.tint = new Color(0xFFFFFF);
     }
+
+    // private _addFilters(...items: Filter[]): void {
+    //     items.forEach((item) => {
+    //         if (this.filters?.includes(item)) {
+    //             console.warn(`Filter ${item} is already applied!`)
+    //             return;
+    //         }
+    //
+    //         this.filters?.push(item);
+    //     });
+    // }
+    //
+    // private _removeFilters(...items: Filter[]): void {
+    //     this.filters = this.filters?.filter((item) => !items.includes(item)) || [];
+    // }
 }
