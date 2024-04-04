@@ -32,3 +32,12 @@
 * Puzzle Sharing: Ability for players to share their creations with others.
 * Social Features: Friend lists, follow players, etc.
 * Events/Tournaments: Time-limited events and competitions.
+
+# Technologies
+### Front-end
+* TypeScript
+* Pixi.js
+* Alpine.js
+### Back-end
+* Elixir
+* PhoenixFramework
