@@ -3,8 +3,6 @@ import { Viewport } from 'pixi-viewport';
 import { Puzzle } from '../../entities/puzzle.ts';
 import { SelectionBox } from '../../entities/selection-box.ts';
 import { BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
-import {Container} from "pixi.js";
-import {PuzzlePiece} from "../../entities/puzzle-piece.ts";
 
 // TODO:
 // * Implement ability to drag multiple puzzle pieces after selection with selection box (wrap active selection within the container?).

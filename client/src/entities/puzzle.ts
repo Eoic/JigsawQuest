@@ -6,14 +6,13 @@ import { Assets, Container, FederatedPointerEvent, Rectangle, Texture } from 'pi
 export class Puzzle extends Container {
     private readonly _viewport: Viewport;
     private readonly _selectionBox: SelectionBox;
-    private readonly _selectionsContainer: Container<PuzzlePiece>;
     private readonly _pieces: Map<number, PuzzlePiece>;
     private _activeDraggable: PuzzlePiece | null;
 
     public get activeDraggable() {
         return this._activeDraggable;
     }
-    
+
     public get pieces() {
         return this._pieces;
     }
@@ -28,8 +27,6 @@ export class Puzzle extends Container {
         this._viewport = viewport;
         this._viewport.addChild(this);
         this._selectionBox = selectionBox;
-        this._selectionsContainer = new Container<PuzzlePiece>();
-        this.addChild(this._selectionsContainer);
         this.handleDrag = this.handleDrag.bind(this);
 
         this._setupEvents();
@@ -60,7 +57,7 @@ export class Puzzle extends Container {
                 for (let y = 0; y < 10; y++) {
                     const rectangle = new Rectangle(size * x, size * y, size, size);
                     const pieceTexture = new Texture(texture, rectangle);
-                    const piece = new PuzzlePiece(pieceTexture, this._selectionsContainer);
+                    const piece = new PuzzlePiece(pieceTexture, this);
 
                     piece.position.set(
                         x * (size + gap),
@@ -89,9 +86,17 @@ export class Puzzle extends Container {
         const parentPosition = event.getLocalPosition(this._viewport);
         this._activeDraggable = this._pieces.get(event.target.uid) || null;
 
+        this._activeDraggable?.select();
+
         if (this._activeDraggable) {
-            // this.setChildIndex(this._activeDraggable, this.pieces.size - 1);
-            this._activeDraggable.startDrag(parentPosition);
+            for (const piece of this.pieces.values()) {
+                if (!piece.isSelected)
+                    continue;
+
+                this.setChildIndex(piece, this.pieces.size - 1);
+                piece.startDrag(parentPosition);
+            }
+
             this._viewport.on('pointermove', this.handleDrag);
         }
     }
@@ -101,7 +106,13 @@ export class Puzzle extends Container {
             return;
 
         const parentPosition = event.getLocalPosition(this._viewport);
-        this._activeDraggable.drag(parentPosition);
+
+        for (const piece of this.pieces.values()) {
+            if (!piece.isSelected)
+                continue;
+
+            piece.drag(parentPosition);
+        }
     }
 
     private handleDragEnd(event: FederatedPointerEvent) {
@@ -110,7 +121,15 @@ export class Puzzle extends Container {
 
         event.stopPropagation();
         this._viewport.off('pointermove', this.handleDrag);
-        this._activeDraggable.endDrag();
+
+        for (const piece of this.pieces.values()) {
+            if (!piece.isSelected)
+                continue;
+
+             piece.endDrag();
+        }
+
+        this._activeDraggable.deselect();
         this._activeDraggable = null;
     }
 
