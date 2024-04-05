@@ -1,12 +1,11 @@
-import {Sprite, Point, Texture, utils, Color} from 'pixi.js';
+import { Sprite, Point, Texture, utils, Color, Container } from 'pixi.js';
 
-export class PuzzlePiece extends Sprite{
-    public static Z_INDEX_TOP = 1000;
-    // public static SELECT_FILTER = new OutlineFilter(2, 0x99FF9A);
-    // public static HOVER_FILTER = new OutlineFilter(2, 0x99FF9A);
+export class PuzzlePiece extends Sprite {
+    public static Z_INDEX_SELECTION = 1;
+    public static Z_INDEX_DRAG = 2;
 
     private readonly _uid: number;
-    private readonly _zIndexOriginal: number;
+    private readonly _selectionsContainer: Container;
     private _dragPosition: Point;
     private _isSelected: boolean;
 
@@ -14,12 +13,15 @@ export class PuzzlePiece extends Sprite{
         return this._uid;
     }
 
-    constructor(texture: Texture) {
+    constructor(texture: Texture, selectionContainer: Container) {
         super(texture)
         this._uid = utils.uid();
         this._dragPosition = new Point();
-        this._zIndexOriginal = this.zIndex;
         this._isSelected = false;
+        this._selectionsContainer = selectionContainer;
+        // this._label = new Text(this.zIndex.toString(), new TextStyle( { align: 'center', fill: 0xFFFFFF, dropShadow: true, dropShadowDistance: 2 }));
+        // this._label.position.set(this.position.x + this.width / 2 - this._label.width / 2, this.position.y + this.height / 2 - this._label.height / 2);
+        // this.addChild(this._label);
         this.eventMode = 'dynamic';
     }
 
@@ -27,34 +29,34 @@ export class PuzzlePiece extends Sprite{
         if (this._isSelected)
             return;
 
-        this.zIndex = PuzzlePiece.Z_INDEX_TOP;
-        this.tint = new Color(0x000FFF);
-        // this._addFilters(PuzzlePiece.SELECT_FILTER);
+        this.tint = new Color(0x00FFF0);
         this._isSelected = true;
+        this._selectionsContainer.addChild(this);
     }
 
     public deselect() {
         if (!this._isSelected)
             return;
 
-        this.zIndex = this._zIndexOriginal;
         this.tint = new Color(0xFFFFFF);
-        // this._removeFilters(PuzzlePiece.SELECT_FILTER);
         this._isSelected = false;
+        this._selectionsContainer.removeChild(this);
     }
 
     public startDrag(parentPosition: Point) {
-        this.zIndex = PuzzlePiece.Z_INDEX_TOP;
-        this._dragPosition.set(parentPosition.x - this.x, parentPosition.y - this.y);
+        // this._dragPosition.set(parentPosition.x - this.x, parentPosition.y - this.y);
+        this._dragPosition.set(parentPosition.x - this._selectionsContainer.x, parentPosition.y - this._selectionsContainer.y);
     }
 
     public drag(parentPosition: Point) {
-        this.x = parentPosition.x - this._dragPosition.x;
-        this.y = parentPosition.y - this._dragPosition.y;
+        // this.x = parentPosition.x - this._dragPosition.x;
+        // this.y = parentPosition.y - this._dragPosition.y;
+
+        this._selectionsContainer.x = parentPosition.x - this._dragPosition.x;
+        this._selectionsContainer.y = parentPosition.y - this._dragPosition.y;
     }
 
     public endDrag() {
-        this.zIndex = this._zIndexOriginal;
     }
 
     public startHover() {
@@ -70,19 +72,4 @@ export class PuzzlePiece extends Sprite{
 
         this.tint = new Color(0xFFFFFF);
     }
-
-    // private _addFilters(...items: Filter[]): void {
-    //     items.forEach((item) => {
-    //         if (this.filters?.includes(item)) {
-    //             console.warn(`Filter ${item} is already applied!`)
-    //             return;
-    //         }
-    //
-    //         this.filters?.push(item);
-    //     });
-    // }
-    //
-    // private _removeFilters(...items: Filter[]): void {
-    //     this.filters = this.filters?.filter((item) => !items.includes(item)) || [];
-    // }
 }

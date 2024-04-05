@@ -6,6 +6,7 @@ import { Assets, Container, FederatedPointerEvent, Rectangle, Texture } from 'pi
 export class Puzzle extends Container {
     private readonly _viewport: Viewport;
     private readonly _selectionBox: SelectionBox;
+    private readonly _selectionsContainer: Container<PuzzlePiece>;
     private readonly _pieces: Map<number, PuzzlePiece>;
     private _activeDraggable: PuzzlePiece | null;
 
@@ -22,12 +23,13 @@ export class Puzzle extends Container {
         this.sortableChildren = true;
         this.interactiveChildren = true;
         this.eventMode = 'dynamic';
+        this._pieces = new Map();
+        this._activeDraggable = null;
         this._viewport = viewport;
         this._viewport.addChild(this);
         this._selectionBox = selectionBox;
-        this._pieces = new Map();
-        this._activeDraggable = null;
-
+        this._selectionsContainer = new Container<PuzzlePiece>();
+        this.addChild(this._selectionsContainer);
         this.handleDrag = this.handleDrag.bind(this);
 
         this._setupEvents();
@@ -58,14 +60,13 @@ export class Puzzle extends Container {
                 for (let y = 0; y < 10; y++) {
                     const rectangle = new Rectangle(size * x, size * y, size, size);
                     const pieceTexture = new Texture(texture, rectangle);
-                    const piece = new PuzzlePiece(pieceTexture);
+                    const piece = new PuzzlePiece(pieceTexture, this._selectionsContainer);
 
                     piece.position.set(
                         x * (size + gap),
                         y * (size + gap),
                     );
 
-                    piece.zIndex = 1;
                     this.addChild(piece);
                     this._pieces.set(piece.uid, piece);
                 }
@@ -77,7 +78,7 @@ export class Puzzle extends Container {
         }).catch((error) => console.error(error));
     }
 
-        private handleDragStart(event: FederatedPointerEvent): void {
+    private handleDragStart(event: FederatedPointerEvent): void {
         if (event.button !== 0)
             return;
 
@@ -89,6 +90,7 @@ export class Puzzle extends Container {
         this._activeDraggable = this._pieces.get(event.target.uid) || null;
 
         if (this._activeDraggable) {
+            // this.setChildIndex(this._activeDraggable, this.pieces.size - 1);
             this._activeDraggable.startDrag(parentPosition);
             this._viewport.on('pointermove', this.handleDrag);
         }
