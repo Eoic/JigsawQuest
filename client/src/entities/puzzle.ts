@@ -86,9 +86,7 @@ export class Puzzle extends Container {
         const parentPosition = event.getLocalPosition(this._viewport);
         this._activeDraggable = this._pieces.get(event.target.uid) || null;
 
-        this._activeDraggable?.select();
-
-        if (this._activeDraggable) {
+        if (this._activeDraggable?.isSelected) {
             for (const piece of this.pieces.values()) {
                 if (!piece.isSelected)
                     continue;
@@ -97,6 +95,16 @@ export class Puzzle extends Container {
                 piece.startDrag(parentPosition);
             }
 
+            this._viewport.on('pointermove', this.handleDrag);
+        } else {
+            for (const piece of this.pieces.values()) {
+                if (!piece.isSelected)
+                    continue;
+
+                piece.deselect();
+            }
+
+            this.activeDraggable?.startDrag(parentPosition);
             this._viewport.on('pointermove', this.handleDrag);
         }
     }
@@ -129,7 +137,6 @@ export class Puzzle extends Container {
              piece.endDrag();
         }
 
-        this._activeDraggable.deselect();
         this._activeDraggable = null;
     }
 
