@@ -1,5 +1,4 @@
 import { Sprite, Point, Texture, utils, Color } from 'pixi.js';
-import { Puzzle } from "./puzzle.ts";
 
 export class PuzzlePiece extends Sprite {
     public static Z_INDEX_SELECTION = 1;
@@ -17,7 +16,7 @@ export class PuzzlePiece extends Sprite {
         return this._isSelected;
     }
 
-    constructor(texture: Texture, puzzle: Puzzle) {
+    constructor(texture: Texture) {
         super(texture)
         this._uid = utils.uid();
         this._dragPosition = new Point();
@@ -41,11 +40,15 @@ export class PuzzlePiece extends Sprite {
         this._isSelected = false;
     }
 
+    
+
     public startDrag(parentPosition: Point) {
         this._dragPosition.set(
             parentPosition.x - this.x,
             parentPosition.y - this.y
         );
+
+        this.select();
     }
 
     public drag(parentPosition: Point) {

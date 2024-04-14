@@ -50,14 +50,11 @@ export class Puzzle extends Container {
             const offsetX = this._viewport.worldWidth / 2 - puzzleHalfSize;
             const offsetY = this._viewport.worldHeight / 2 - puzzleHalfSize;
 
-            // TODO: Move into separate method.
-            // ...
-
             for (let x = 0; x < 10; x++) {
                 for (let y = 0; y < 10; y++) {
                     const rectangle = new Rectangle(size * x, size * y, size, size);
                     const pieceTexture = new Texture(texture, rectangle);
-                    const piece = new PuzzlePiece(pieceTexture, this);
+                    const piece = new PuzzlePiece(pieceTexture);
 
                     piece.position.set(
                         x * (size + gap),
@@ -84,9 +81,11 @@ export class Puzzle extends Container {
 
         event.stopPropagation();
         const parentPosition = event.getLocalPosition(this._viewport);
-        this._activeDraggable = this._pieces.get(event.target.uid) || null;
+        this._activeDraggable = this._pieces.get(event.target.uid) || null;        
+        
+        if (this._activeDraggable) {
+            this._activeDraggable.select();
 
-        if (this._activeDraggable?.isSelected) {
             for (const piece of this.pieces.values()) {
                 if (!piece.isSelected)
                     continue;
@@ -96,17 +95,8 @@ export class Puzzle extends Container {
             }
 
             this._viewport.on('pointermove', this.handleDrag);
-        } else {
-            for (const piece of this.pieces.values()) {
-                if (!piece.isSelected)
-                    continue;
-
-                piece.deselect();
-            }
-
-            this.activeDraggable?.startDrag(parentPosition);
-            this._viewport.on('pointermove', this.handleDrag);
         }
+
     }
 
     private handleDrag(event: FederatedPointerEvent) {
@@ -134,7 +124,7 @@ export class Puzzle extends Container {
             if (!piece.isSelected)
                 continue;
 
-             piece.endDrag();
+            piece.endDrag();
         }
 
         this._activeDraggable = null;

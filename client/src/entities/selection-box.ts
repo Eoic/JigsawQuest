@@ -21,7 +21,7 @@ export class SelectionBox extends Graphics{
         this._size = { width: 0, height: 0 };
     }
 
-    public beginSelecting(origin: Point, selectableItems: Map<number, PuzzlePiece>) {
+    public beginSelect(origin: Point, selectableItems: Map<number, PuzzlePiece>) {
         this._isActive = true;
         this._origin = origin;
         this._selectableItems = selectableItems;

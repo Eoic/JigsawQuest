@@ -4,9 +4,6 @@ import { Puzzle } from '../../entities/puzzle.ts';
 import { SelectionBox } from '../../entities/selection-box.ts';
 import { BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
 
-// TODO:
-// * Implement ability to drag multiple puzzle pieces after selection with selection box (wrap active selection within the container?).
-
 export class Scene {
     private readonly _viewport: Viewport;
     private readonly _app: PIXI.Application<HTMLCanvasElement>;
@@ -79,7 +76,7 @@ export class Scene {
             return;
 
         this._puzzle?.calculateBounds();
-        this._selectionBox.beginSelecting(new PIXI.Point(event.clientX, event.clientY ), this._puzzle!.pieces);
+        this._selectionBox.beginSelect(new PIXI.Point(event.clientX, event.clientY ), this._puzzle!.pieces);
     }
 
     private handleAppPointerMove(event: PointerEvent) {
