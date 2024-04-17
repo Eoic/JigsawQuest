@@ -8,6 +8,7 @@ export class Puzzle extends Container {
     private readonly _selectionBox: SelectionBox;
     private readonly _pieces: Map<number, PuzzlePiece>;
     private _activeDraggable: PuzzlePiece | null;
+    private _isGroupDragging: boolean;
 
     public get activeDraggable() {
         return this._activeDraggable;
@@ -24,6 +25,7 @@ export class Puzzle extends Container {
         this.eventMode = 'dynamic';
         this._pieces = new Map();
         this._activeDraggable = null;
+        this._isGroupDragging = false;
         this._viewport = viewport;
         this._viewport.addChild(this);
         this._selectionBox = selectionBox;
@@ -83,9 +85,10 @@ export class Puzzle extends Container {
         const parentPosition = event.getLocalPosition(this._viewport);
         this._activeDraggable = this._pieces.get(event.target.uid) || null;        
         
-        if (this._activeDraggable) {
-            this._activeDraggable.select();
+        if (!this._activeDraggable)
+            return;
 
+        if (this.activeDraggable?.isSelected) {
             for (const piece of this.pieces.values()) {
                 if (!piece.isSelected)
                     continue;
@@ -94,9 +97,21 @@ export class Puzzle extends Container {
                 piece.startDrag(parentPosition);
             }
 
-            this._viewport.on('pointermove', this.handleDrag);
+            this._isGroupDragging = true;
+        } else {
+            for (const piece of this.pieces.values()) {
+                if (!piece.isSelected)
+                    continue;
+
+                piece.deselect();
+            }
+
+            this.setChildIndex(this._activeDraggable, this.pieces.size - 1);
+            this.activeDraggable?.startDrag(parentPosition);
+            this._isGroupDragging = false;
         }
 
+        this._viewport.on('pointermove', this.handleDrag);
     }
 
     private handleDrag(event: FederatedPointerEvent) {
@@ -127,6 +142,7 @@ export class Puzzle extends Container {
             piece.endDrag();
         }
 
+        !this._isGroupDragging && this._activeDraggable.deselect();
         this._activeDraggable = null;
     }
 

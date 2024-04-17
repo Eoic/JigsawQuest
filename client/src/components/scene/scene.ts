@@ -71,14 +71,20 @@ export class Scene {
         this._app.renderer.view.addEventListener('pointerup', this.handleAppPointerUp.bind(this));
     }
 
+    /**
+     * Make selection box active and initiate selection rectangle drawing.
+     */
     private handleAppPointerDown(event: PointerEvent) {
-        if (this._puzzle!.activeDraggable || event.button !== 0)
+        if (!this._puzzle || this._puzzle!.activeDraggable || event.button !== 0)
             return;
 
-        this._puzzle?.calculateBounds();
-        this._selectionBox.beginSelect(new PIXI.Point(event.clientX, event.clientY ), this._puzzle!.pieces);
+        this._puzzle.calculateBounds();
+        this._selectionBox.beginSelect(new PIXI.Point(event.clientX, event.clientY ), this._puzzle.pieces);
     }
 
+    /**
+     * Perform selecting with the selection box rectangle on mouse movement.
+     */
     private handleAppPointerMove(event: PointerEvent) {
         if (!this._selectionBox.isActive)
             return;
@@ -86,8 +92,12 @@ export class Scene {
         this._selectionBox.select(new PIXI.Point(event.clientX, event.clientY));
     }
 
+    /**
+     * End selection by the selection box if it was activated.
+     */
     private handleAppPointerUp(_event: PointerEvent) {
-        this._selectionBox.endSelect();
+        if (this._selectionBox.isActive)
+            this._selectionBox.endSelect();
     }
 
     private handleWindowResize(): void {

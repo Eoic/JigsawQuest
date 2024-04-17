@@ -12,6 +12,10 @@ export class SelectionBox extends Graphics{
         return this._isActive;
     }
 
+    get _selectionArea() {
+        return this._size.width * this._size.height;
+    }
+
     constructor() {
         super();
         this.alpha = 0.4
@@ -31,9 +35,9 @@ export class SelectionBox extends Graphics{
         this.endFill();
     }
 
-    public select(cursorPosition: Point): PuzzlePiece[] {
+    public select(cursorPosition: Point) {
         if (!this.isActive || !this._origin)
-            return [];
+            return;
 
         this._size.width = Math.abs(this._origin.x - cursorPosition.x);
         this._size.height = Math.abs(this._origin.y - cursorPosition.y);
@@ -45,21 +49,23 @@ export class SelectionBox extends Graphics{
         this.clear();
         this.lineStyle({ width: 1, color: 0x99CDEA });
         this.beginFill(0x2378A9);
-        this.drawRect(
-            this._topLeft.x,
-            this._topLeft.y,
-            this._size.width,
-            this._size.height,
-        );
+        this.drawRect(this._topLeft.x, this._topLeft.y, this._size.width, this._size.height);
         this.endFill();
 
         if (this._selectableItems)
-            return this._selectItems(this._selectableItems);
+            this._selectItems(this._selectableItems);
+    }
 
-        return [];
+    public deselect() {
+        for (const item of this._selectableItems!.values())
+            if (item.isSelected)
+                item.deselect();
     }
 
     public endSelect() {
+        if (this._selectionArea === 0)
+            this.deselect();
+
         this.clear();
         this._isActive = false;
         this._origin.set(0, 0);
@@ -67,23 +73,18 @@ export class SelectionBox extends Graphics{
         this._size = { width: 0, height: 0 };
     }
 
-    private _selectItems(items: Map<number, PuzzlePiece>): PuzzlePiece[] {
-        const selections = [];
-
+    private _selectItems(items: Map<number, PuzzlePiece>) {
         for (const item of items.values()) {
             const { x, y, width, height } = item._bounds.getRectangle();
 
             if (x >= this._topLeft.x && x + width < this._topLeft.x + this._size.width) {
                 if (y >= this._topLeft.y && y + height <= this._topLeft.y + this._size.height) {
                     item.select();
-                    selections.push(item);
                     continue;
                 }
             }
 
             item.deselect();
         }
-
-        return selections;
     }
 }
