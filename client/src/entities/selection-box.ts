@@ -1,38 +1,41 @@
 import { Graphics, Point } from 'pixi.js';
 import { PuzzlePiece } from './puzzle-piece.ts';
+import { Selectable } from './selectable.ts';
 
 export class SelectionBox extends Graphics{
+    static BACKGROUND_COLOR: number = 0x2378A9;
+    static BORDER_COLOR: number = 0x99CDEA;
+    static OPACITY: number = 0.4;
+
     private _isActive: boolean;
     private _origin: Point;
     private _topLeft: Point;
     private _size: { width: number, height: number };
-    private _selectableItems: Map<number, PuzzlePiece> | undefined;
+    private _selectableItems: Map<number, Selectable>;
 
     get isActive() {
         return this._isActive;
     }
 
-    get _selectionArea() {
-        return this._size.width * this._size.height;
-    }
-
     constructor() {
         super();
-        this.alpha = 0.4
+        this._isActive = false;
         this._origin = new Point();
         this._topLeft = new Point();
-        this._isActive = false;
         this._size = { width: 0, height: 0 };
+        this._selectableItems = new Map();
+        this.alpha = SelectionBox.OPACITY;
     }
 
     public beginSelect(origin: Point, selectableItems: Map<number, PuzzlePiece>) {
         this._isActive = true;
         this._origin = origin;
+
+        if (!(selectableItems instanceof Map))
+            throw new Error('Invalid selectables provided to selection box!');
+
         this._selectableItems = selectableItems;
-        this.clear();
-        this.beginFill(0x2378A9);
-        this.drawRect(origin.x, origin.y, this._size.width, this._size.height);
-        this.endFill();
+        this.draw(origin.x, origin.y, this._size.width, this._size.height);
     }
 
     public select(cursorPosition: Point) {
@@ -41,29 +44,20 @@ export class SelectionBox extends Graphics{
 
         this._size.width = Math.abs(this._origin.x - cursorPosition.x);
         this._size.height = Math.abs(this._origin.y - cursorPosition.y);
-        this._topLeft.set(
-            Math.min(this._origin.x, cursorPosition.x),
-            Math.min(this._origin.y, cursorPosition.y)
-        );
-
-        this.clear();
-        this.lineStyle({ width: 1, color: 0x99CDEA });
-        this.beginFill(0x2378A9);
-        this.drawRect(this._topLeft.x, this._topLeft.y, this._size.width, this._size.height);
-        this.endFill();
-
-        if (this._selectableItems)
-            this._selectItems(this._selectableItems);
+        this._topLeft.set(Math.min(this._origin.x, cursorPosition.x), Math.min(this._origin.y, cursorPosition.y));
+        this.draw(this._topLeft.x, this._topLeft.y, this._size.width, this._size.height);
+        this.selectItems(this._selectableItems);
     }
 
     public deselect() {
-        for (const item of this._selectableItems!.values())
+        for (const item of this._selectableItems.values()) {
             if (item.isSelected)
                 item.deselect();
+        }
     }
 
     public endSelect() {
-        if (this._selectionArea === 0)
+        if (this._size.width * this._size.height === 0)
             this.deselect();
 
         this.clear();
@@ -73,18 +67,33 @@ export class SelectionBox extends Graphics{
         this._size = { width: 0, height: 0 };
     }
 
-    private _selectItems(items: Map<number, PuzzlePiece>) {
+    private selectItems(items: Map<number, Selectable>) {
         for (const item of items.values()) {
-            const { x, y, width, height } = item._bounds.getRectangle();
-
-            if (x >= this._topLeft.x && x + width < this._topLeft.x + this._size.width) {
-                if (y >= this._topLeft.y && y + height <= this._topLeft.y + this._size.height) {
-                    item.select();
-                    continue;
-                }
+            if (this.isSelectValid(item)) {
+                item.select();
+                continue;
             }
 
             item.deselect();
         }
+    }
+
+    private isSelectValid(item: Selectable) {
+        const { x, y, width, height } = item.dimensions;
+
+        if (x >= this._topLeft.x && x + width < this._topLeft.x + this._size.width) {
+            if (y >= this._topLeft.y && y + height <= this._topLeft.y + this._size.height)
+                return true;
+        }
+
+        return false;
+    }
+
+    private draw(x: number, y: number, width: number, height: number) {
+        this.clear();
+        this.lineStyle({ width: 1, color: SelectionBox.BORDER_COLOR });
+        this.beginFill(SelectionBox.BACKGROUND_COLOR);
+        this.drawRect(x, y, width, height);
+        this.endFill();
     }
 }

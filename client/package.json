@@ -17,6 +17,6 @@
     "dependencies": {
         "alpinejs": "^3.13.3",
         "pixi-viewport": "^5.0.2",
-        "pixi.js": "^7.4.2"
+        "pixi.js": "^7.0.5"
     }
 }

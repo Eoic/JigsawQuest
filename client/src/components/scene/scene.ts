@@ -6,9 +6,9 @@ import { BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
 
 export class Scene {
     private readonly _viewport: Viewport;
-    private readonly _app: PIXI.Application<HTMLCanvasElement>;
-    private readonly _selectionBox: SelectionBox;
     private readonly _puzzle: Puzzle | null;
+    private readonly _selectionBox: SelectionBox;
+    private readonly _app: PIXI.Application<HTMLCanvasElement>;
 
     constructor() {
         this._app = this.setupApp(document.body);
@@ -75,11 +75,11 @@ export class Scene {
      * Make selection box active and initiate selection rectangle drawing.
      */
     private handleAppPointerDown(event: PointerEvent) {
-        if (!this._puzzle || this._puzzle!.activeDraggable || event.button !== 0)
+        if (!this._puzzle || this._puzzle.dragPiece || event.button !== 0)
             return;
 
         this._puzzle.calculateBounds();
-        this._selectionBox.beginSelect(new PIXI.Point(event.clientX, event.clientY ), this._puzzle.pieces);
+        this._selectionBox.beginSelect(new PIXI.Point(event.clientX, event.clientY), this._puzzle.pieces);
     }
 
     /**
@@ -100,15 +100,23 @@ export class Scene {
             this._selectionBox.endSelect();
     }
 
+    /**
+     * Update the app and the viewport when window is resized.
+     */
     private handleWindowResize(): void {
         this._app?.resize();
         this._viewport?.resize(window.innerWidth, window.innerHeight);
     }
 
+    /**
+     * Disable middle mouse click scrolling.
+     */
     private handleWindowMouseDown(event: MouseEvent) {
         if (event.button === 1) {
             event.preventDefault();
             return false;
         }
+
+        return true;
     }
 }

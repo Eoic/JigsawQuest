@@ -7,15 +7,15 @@ export class Puzzle extends Container {
     private readonly _viewport: Viewport;
     private readonly _selectionBox: SelectionBox;
     private readonly _pieces: Map<number, PuzzlePiece>;
-    private _activeDraggable: PuzzlePiece | null;
-    private _isGroupDragging: boolean;
-
-    public get activeDraggable() {
-        return this._activeDraggable;
-    }
+    private _dragPiece: PuzzlePiece | null;
+    private _isGroupDrag: boolean;
 
     public get pieces() {
         return this._pieces;
+    }
+
+    public get dragPiece() {
+        return this._dragPiece;
     }
 
     constructor(viewport: Viewport, selectionBox: SelectionBox) {
@@ -24,8 +24,8 @@ export class Puzzle extends Container {
         this.interactiveChildren = true;
         this.eventMode = 'dynamic';
         this._pieces = new Map();
-        this._activeDraggable = null;
-        this._isGroupDragging = false;
+        this._dragPiece = null;
+        this._isGroupDrag = false;
         this._viewport = viewport;
         this._viewport.addChild(this);
         this._selectionBox = selectionBox;
@@ -83,12 +83,12 @@ export class Puzzle extends Container {
 
         event.stopPropagation();
         const parentPosition = event.getLocalPosition(this._viewport);
-        this._activeDraggable = this._pieces.get(event.target.uid) || null;        
+        this._dragPiece = this._pieces.get(event.target.uid) || null;        
         
-        if (!this._activeDraggable)
+        if (!this._dragPiece)
             return;
 
-        if (this.activeDraggable?.isSelected) {
+        if (this._dragPiece.isSelected) {
             for (const piece of this.pieces.values()) {
                 if (!piece.isSelected)
                     continue;
@@ -97,7 +97,7 @@ export class Puzzle extends Container {
                 piece.startDrag(parentPosition);
             }
 
-            this._isGroupDragging = true;
+            this._isGroupDrag = true;
         } else {
             for (const piece of this.pieces.values()) {
                 if (!piece.isSelected)
@@ -106,16 +106,16 @@ export class Puzzle extends Container {
                 piece.deselect();
             }
 
-            this.setChildIndex(this._activeDraggable, this.pieces.size - 1);
-            this.activeDraggable?.startDrag(parentPosition);
-            this._isGroupDragging = false;
+            this.setChildIndex(this._dragPiece, this.pieces.size - 1);
+            this._dragPiece.startDrag(parentPosition);
+            this._isGroupDrag = false;
         }
 
         this._viewport.on('pointermove', this.handleDrag);
     }
 
     private handleDrag(event: FederatedPointerEvent) {
-        if (!this._activeDraggable)
+        if (!this._dragPiece)
             return;
 
         const parentPosition = event.getLocalPosition(this._viewport);
@@ -129,7 +129,7 @@ export class Puzzle extends Container {
     }
 
     private handleDragEnd(event: FederatedPointerEvent) {
-        if (!this._activeDraggable)
+        if (!this._dragPiece)
             return;
 
         event.stopPropagation();
@@ -142,12 +142,12 @@ export class Puzzle extends Container {
             piece.endDrag();
         }
 
-        !this._isGroupDragging && this._activeDraggable.deselect();
-        this._activeDraggable = null;
+        !this._isGroupDrag && this._dragPiece.deselect();
+        this._dragPiece = null;
     }
 
     private handleHoverStart(event: FederatedPointerEvent) {
-        if (this._activeDraggable || this._selectionBox.isActive)
+        if (this._dragPiece || this._selectionBox.isActive)
             return;
 
         if (!(event.target instanceof PuzzlePiece))
@@ -157,7 +157,7 @@ export class Puzzle extends Container {
     }
 
     private handleHoverEnd(event: FederatedPointerEvent) {
-        if (this._activeDraggable || this._selectionBox.isActive)
+        if (this._dragPiece || this._selectionBox.isActive)
             return;
 
         if (!(event.target instanceof PuzzlePiece))

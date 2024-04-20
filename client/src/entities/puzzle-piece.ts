@@ -1,6 +1,7 @@
+import { Selectable } from './selectable';
 import { Sprite, Point, Texture, utils, Color } from 'pixi.js';
 
-export class PuzzlePiece extends Sprite {
+export class PuzzlePiece extends Sprite implements Selectable {
     public static Z_INDEX_SELECTION = 1;
     public static Z_INDEX_DRAG = 2;
 
@@ -14,6 +15,10 @@ export class PuzzlePiece extends Sprite {
 
     public get isSelected() {
         return this._isSelected;
+    }
+
+    public get dimensions() {
+        return this._bounds.getRectangle();
     }
 
     constructor(texture: Texture) {
@@ -40,8 +45,6 @@ export class PuzzlePiece extends Sprite {
         this._isSelected = false;
     }
 
-    
-
     public startDrag(parentPosition: Point) {
         this._dragPosition.set(
             parentPosition.x - this.x,
@@ -56,8 +59,7 @@ export class PuzzlePiece extends Sprite {
         this.y = parentPosition.y - this._dragPosition.y;
     }
 
-    public endDrag() {
-    }
+    public endDrag() {}
 
     public startHover() {
         if (this._isSelected)
