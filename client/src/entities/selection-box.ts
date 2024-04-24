@@ -1,15 +1,11 @@
 import { Graphics, Point } from 'pixi.js';
-import { PuzzlePiece } from './puzzle-piece.ts';
 import { Selectable } from './selectable.ts';
+import { BOX_BACKGROUND_COLOR, BOX_BORDER_COLOR, BOX_BORDER_WIDTH, BOX_OPACITY } from '../constants.ts';
 
-export class SelectionBox extends Graphics{
-    static BACKGROUND_COLOR: number = 0x2378A9;
-    static BORDER_COLOR: number = 0x99CDEA;
-    static OPACITY: number = 0.4;
-
-    private _isActive: boolean;
+export class SelectionBox extends Graphics {
     private _origin: Point;
     private _topLeft: Point;
+    private _isActive: boolean;
     private _size: { width: number, height: number };
     private _selectableItems: Map<number, Selectable>;
 
@@ -24,10 +20,10 @@ export class SelectionBox extends Graphics{
         this._topLeft = new Point();
         this._size = { width: 0, height: 0 };
         this._selectableItems = new Map();
-        this.alpha = SelectionBox.OPACITY;
+        this.alpha = BOX_OPACITY;
     }
 
-    public beginSelect(origin: Point, selectableItems: Map<number, PuzzlePiece>) {
+    public beginSelect(origin: Point, selectableItems: Map<number, Selectable>) {
         this._isActive = true;
         this._origin = origin;
 
@@ -91,8 +87,8 @@ export class SelectionBox extends Graphics{
 
     private draw(x: number, y: number, width: number, height: number) {
         this.clear();
-        this.lineStyle({ width: 1, color: SelectionBox.BORDER_COLOR });
-        this.beginFill(SelectionBox.BACKGROUND_COLOR);
+        this.lineStyle({ width: BOX_BORDER_WIDTH, color: BOX_BORDER_COLOR });
+        this.beginFill(BOX_BACKGROUND_COLOR);
         this.drawRect(x, y, width, height);
         this.endFill();
     }

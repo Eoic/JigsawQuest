@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { Puzzle } from '../../entities/puzzle.ts';
 import { SelectionBox } from '../../entities/selection-box.ts';
-import { BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
+import { WORLD_BACKGROUND_COLOR, WORLD_HEIGHT, WORLD_WIDTH } from '../../constants';
 
 export class Scene {
     private readonly _viewport: Viewport;
@@ -21,15 +21,15 @@ export class Scene {
     }
 
     private setupApp(container: HTMLElement): PIXI.Application<HTMLCanvasElement> {
-        const app = new PIXI.Application({
+        const app = new PIXI.Application<HTMLCanvasElement>({
             resizeTo: window,
             antialias: true,
             autoDensity: true,
             width: window.innerWidth,
             height: window.innerHeight,
-            backgroundColor: BACKGROUND_COLOR,
+            backgroundColor: WORLD_BACKGROUND_COLOR,
             resolution: 2,
-        }) as PIXI.Application<HTMLCanvasElement>;
+        });
 
         container.appendChild(app.view);
 
@@ -64,17 +64,17 @@ export class Scene {
     }
 
     private setupEvents() {
-        window.addEventListener('resize', this.handleWindowResize.bind(this));
-        window.addEventListener('mousedown', this.handleWindowMouseDown.bind(this));
-        this._app.renderer.view.addEventListener('pointerdown', this.handleAppPointerDown.bind(this));
-        this._app.renderer.view.addEventListener('pointermove', this.handleAppPointerMove.bind(this));
-        this._app.renderer.view.addEventListener('pointerup', this.handleAppPointerUp.bind(this));
+        window.addEventListener('resize', this.handleWindowResize);
+        window.addEventListener('mousedown', this.handleWindowMouseDown);
+        this._app.renderer.view.addEventListener('pointerdown', this.handleAppPointerDown);
+        this._app.renderer.view.addEventListener('pointermove', this.handleAppPointerMove);
+        this._app.renderer.view.addEventListener('pointerup', this.handleAppPointerUp);
     }
 
     /**
      * Make selection box active and initiate selection rectangle drawing.
      */
-    private handleAppPointerDown(event: PointerEvent) {
+    private handleAppPointerDown = (event: PointerEvent) => {
         if (!this._puzzle || this._puzzle.dragPiece || event.button !== 0)
             return;
 
@@ -85,7 +85,7 @@ export class Scene {
     /**
      * Perform selecting with the selection box rectangle on mouse movement.
      */
-    private handleAppPointerMove(event: PointerEvent) {
+    private handleAppPointerMove = (event: PointerEvent) => {
         if (!this._selectionBox.isActive)
             return;
 
@@ -95,7 +95,7 @@ export class Scene {
     /**
      * End selection by the selection box if it was activated.
      */
-    private handleAppPointerUp(_event: PointerEvent) {
+    private handleAppPointerUp = (_event: PointerEvent) => {
         if (this._selectionBox.isActive)
             this._selectionBox.endSelect();
     }
@@ -103,7 +103,7 @@ export class Scene {
     /**
      * Update the app and the viewport when window is resized.
      */
-    private handleWindowResize(): void {
+    private handleWindowResize = () => {
         this._app?.resize();
         this._viewport?.resize(window.innerWidth, window.innerHeight);
     }
@@ -111,7 +111,7 @@ export class Scene {
     /**
      * Disable middle mouse click scrolling.
      */
-    private handleWindowMouseDown(event: MouseEvent) {
+    private handleWindowMouseDown = (event: MouseEvent) => {
         if (event.button === 1) {
             event.preventDefault();
             return false;

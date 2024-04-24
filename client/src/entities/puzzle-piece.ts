@@ -1,10 +1,8 @@
+import { PIECE_HOVER_TINT, PIECE_SELECTION_TINT } from '../constants';
 import { Selectable } from './selectable';
 import { Sprite, Point, Texture, utils, Color } from 'pixi.js';
 
 export class PuzzlePiece extends Sprite implements Selectable {
-    public static Z_INDEX_SELECTION = 1;
-    public static Z_INDEX_DRAG = 2;
-
     private readonly _uid: number;
     private _dragPosition: Point;
     private _isSelected: boolean;
@@ -33,7 +31,7 @@ export class PuzzlePiece extends Sprite implements Selectable {
         if (this._isSelected)
             return;
 
-        this.tint = new Color(0x00FFF0);
+        this.tint = new Color(PIECE_SELECTION_TINT);
         this._isSelected = true;
     }
 
@@ -59,13 +57,13 @@ export class PuzzlePiece extends Sprite implements Selectable {
         this.y = parentPosition.y - this._dragPosition.y;
     }
 
-    public endDrag() {}
+    public endDrag() { }
 
     public startHover() {
         if (this._isSelected)
             return;
 
-        this.tint = new Color(0xFFF000);
+        this.tint = new Color(PIECE_HOVER_TINT);
     }
 
     public endHover() {
