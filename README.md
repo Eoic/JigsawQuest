@@ -1,4 +1,6 @@
-# Outline
+#  JigsawQuest - multiplayer puzzle solving game.
+
+## Features
 ### Core Gameplay
 1. Jigsaw Creation
 * Image Sources: User uploads, online image libraries (with licensing), in-game packs.
