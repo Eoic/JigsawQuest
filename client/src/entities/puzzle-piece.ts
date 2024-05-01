@@ -1,6 +1,6 @@
-import { PIECE_HOVER_TINT, PIECE_SELECTION_TINT } from '../constants';
 import { Selectable } from './selectable';
 import { Sprite, Point, Texture, utils, Color } from 'pixi.js';
+import { PIECE_HOVER_TINT, PIECE_SELECTION_TINT } from '../constants';
 
 export class PuzzlePiece extends Sprite implements Selectable {
     private readonly _uid: number;

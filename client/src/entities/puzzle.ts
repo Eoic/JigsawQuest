@@ -1,7 +1,7 @@
 import { Viewport } from 'pixi-viewport';
 import { PuzzlePiece } from './puzzle-piece.ts';
 import { SelectionBox } from './selection-box.ts';
-import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture } from 'pixi.js';
+import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point } from 'pixi.js';
 
 export class Puzzle extends Container {
     private readonly _viewport: Viewport;
@@ -74,42 +74,13 @@ export class Puzzle extends Container {
     }
 
     private handleDragStart = (event: FederatedPointerEvent) => {
-        if (event.button !== 0)
-            return;
-
-        if (!(event.target instanceof PuzzlePiece))
+        if (event.button !== 0 || !(event.target instanceof PuzzlePiece) || this.captureDragPiece(event.target) === null)
             return;
 
         event.stopPropagation();
+
         const parentPosition = event.getLocalPosition(this._viewport);
-        this._dragPiece = this._pieces.get(event.target.uid) || null;
-
-        if (!this._dragPiece)
-            return;
-
-        if (this._dragPiece.isSelected) {
-            for (const piece of this.pieces.values()) {
-                if (!piece.isSelected)
-                    continue;
-
-                this.setChildIndex(piece, this.pieces.size - 1);
-                piece.startDrag(parentPosition);
-            }
-
-            this._isGroupDrag = true;
-        } else {
-            for (const piece of this.pieces.values()) {
-                if (!piece.isSelected)
-                    continue;
-
-                piece.deselect();
-            }
-
-            this.setChildIndex(this._dragPiece, this.pieces.size - 1);
-            this._dragPiece.startDrag(parentPosition);
-            this._isGroupDrag = false;
-        }
-
+        this._dragPiece!.isSelected ? this.dragGroup(parentPosition) : this.dragSingle(parentPosition);
         this._viewport.on('pointermove', this.handleDrag);
     }
 
@@ -146,22 +117,47 @@ export class Puzzle extends Container {
     }
 
     private handleHoverStart = (event: FederatedPointerEvent) => {
-        if (this._dragPiece || this._selectionBox.isActive)
-            return;
-
-        if (!(event.target instanceof PuzzlePiece))
-            return;
-
-        event.target.startHover();
+        if (this.isHoverEventValid(event))
+            (event.target as PuzzlePiece).startHover();
     }
 
     private handleHoverEnd = (event: FederatedPointerEvent) => {
-        if (this._dragPiece || this._selectionBox.isActive)
-            return;
+        if (this.isHoverEventValid(event))
+            (event.target as PuzzlePiece).endHover();
+    }
 
-        if (!(event.target instanceof PuzzlePiece))
-            return;
+    private captureDragPiece(target: PuzzlePiece) {
+        this._dragPiece = this._pieces.get(target.uid) || null;
+        return this._dragPiece;
+    }
 
-        event.target.endHover();
+    private dragSingle(parentPosition: Point) {
+        for (const piece of this.pieces.values()) {
+            if (!piece.isSelected)
+                continue;
+
+            piece.deselect();
+        }
+
+        this.setChildIndex(this._dragPiece!, this.pieces.size - 1);
+        this._dragPiece!.startDrag(parentPosition);
+        this._isGroupDrag = false;
+    }
+
+    // TODO: Fix incorrect reordering with setChildIndex/2.
+    private dragGroup(parentPosition: Point) {
+        for (const piece of this.pieces.values()) {
+            if (!piece.isSelected)
+                continue;
+
+            this.setChildIndex(piece, this.pieces.size - 1);
+            piece.startDrag(parentPosition);
+        }
+
+        this._isGroupDrag = true;
+    }
+
+    private isHoverEventValid(event: FederatedPointerEvent) {
+        return !this._dragPiece && !this._selectionBox.isActive && event.target instanceof PuzzlePiece;
     }
 }
