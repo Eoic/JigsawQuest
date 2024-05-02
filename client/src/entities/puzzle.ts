@@ -1,7 +1,44 @@
+// https://github.com/Draradech/jigsaw
+
 import { Viewport } from 'pixi-viewport';
 import { PuzzlePiece } from './puzzle-piece.ts';
 import { SelectionBox } from './selection-box.ts';
-import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point } from 'pixi.js';
+import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point, Sprite } from 'pixi.js';
+
+// Color segmentation.
+// const colorKeys = []; // Array to store unique color values from the mask
+
+// // Assuming you can identify unique color values from the mask image
+// for (let y = 0; y < maskTexture.height; y++) {
+//     for (let x = 0; x < maskTexture.width; x++) {
+//         const color = maskTexture.baseTexture.pixels[(y * maskTexture.width + x) * 4]; // Access pixel color data
+//         if (!colorKeys.includes(color)) {
+//             colorKeys.push(color);
+//         }
+//     }
+// }
+
+// for (const color of colorKeys) {
+//     // Create a temporary render target to isolate the color
+//     const renderTexture = PIXI.RenderTexture.create({ width: maskTexture.width, height: maskTexture.height });
+
+//     // Render only pixels matching the current color to the render target
+//     const filter = new PIXI.filters.ColorMatrixFilter();
+//     filter.matrix = [
+//         1, 0, 0, 0, 0, // Red channel remains unchanged
+//         0, 0, 0, 0, 0, // Green channel set to 0
+//         0, 0, 0, 0, 0, // Blue channel set to 0
+//         0, 0, 0, 1, 0  // Alpha channel remains unchanged
+//     ];
+//     maskSprite.filters = [filter];
+//     app.renderer.render(maskSprite, renderTexture);
+//     maskSprite.filters = null; // Clear filter
+
+//     // Rest of the process remains similar to the previous approach
+//     mainSprite.mask = new PIXI.Sprite(PIXI.Texture.from(renderTexture));
+//     // ... (render, create piece texture and sprite, add to scene)
+// }
+
 
 export class Puzzle extends Container {
     private readonly _viewport: Viewport;
@@ -31,7 +68,7 @@ export class Puzzle extends Container {
         this._selectionBox = selectionBox;
 
         this._setupEvents();
-        this._createPieces('puzzle.png');
+        this._createPieces('puzzle.png', 'mask-draft.png');
     }
 
     private _setupEvents() {
@@ -42,35 +79,46 @@ export class Puzzle extends Container {
         this.on('pointerout', this.handleHoverEnd);
     }
 
-    private _createPieces(imagePath: string) {
-        const gap = 15;
-        const size = 100;
+    private async _createPieces(imagePath: string, maskPath: string) {
+        const puzzleTexture = await Assets.load(imagePath);
+        const maskTexture = await Assets.load(maskPath);
 
-        Assets.load(imagePath).then((texture: BaseTexture) => {
-            const puzzleHalfSize = (gap * 9 + 100 * 10) / 2;
-            const offsetX = this._viewport.worldWidth / 2 - puzzleHalfSize;
-            const offsetY = this._viewport.worldHeight / 2 - puzzleHalfSize;
+        const puzzleSprite = new Sprite(puzzleTexture);
+        const maskSprite = new Sprite(maskTexture);
+        maskSprite.renderable = false;
+        puzzleSprite.mask = maskSprite;
 
-            for (let x = 0; x < 10; x++) {
-                for (let y = 0; y < 10; y++) {
-                    const rectangle = new Rectangle(size * x, size * y, size, size);
-                    const pieceTexture = new Texture(texture, rectangle);
-                    const piece = new PuzzlePiece(pieceTexture);
+        this.addChild(puzzleSprite);
+        this.addChild(maskSprite)
 
-                    piece.position.set(
-                        x * (size + gap),
-                        y * (size + gap),
-                    );
+        // const gap = 15;
+        // const size = 100;
 
-                    this.addChild(piece);
-                    this._pieces.set(piece.uid, piece);
-                }
-            }
+        // Assets.load(imagePath).then((texture: BaseTexture) => {
+        //     const puzzleHalfSize = (gap * 9 + 100 * 10) / 2;
+        //     const offsetX = this._viewport.worldWidth / 2 - puzzleHalfSize;
+        //     const offsetY = this._viewport.worldHeight / 2 - puzzleHalfSize;
 
-            this.position.set(offsetX, offsetY);
-            this.calculateBounds();
-            this.getBounds();
-        }).catch((error) => console.error(error));
+        //     for (let x = 0; x < 10; x++) {
+        //         for (let y = 0; y < 10; y++) {
+        //             const rectangle = new Rectangle(size * x, size * y, size, size);
+        //             const pieceTexture = new Texture(texture, rectangle);
+        //             const piece = new PuzzlePiece(pieceTexture);
+
+        //             piece.position.set(
+        //                 x * (size + gap),
+        //                 y * (size + gap),
+        //             );
+
+        //             this.addChild(piece);
+        //             this._pieces.set(piece.uid, piece);
+        //         }
+        //     }
+
+        //     this.position.set(offsetX, offsetY);
+        //     this.calculateBounds();
+        //     this.getBounds();
+        // }).catch((error) => console.error(error));
     }
 
     private handleDragStart = (event: FederatedPointerEvent) => {
@@ -80,7 +128,7 @@ export class Puzzle extends Container {
         event.stopPropagation();
 
         const parentPosition = event.getLocalPosition(this._viewport);
-        this._dragPiece!.isSelected ? this.dragGroup(parentPosition) : this.dragSingle(parentPosition);
+        this._dragPiece!.isSelected ? this.startDragGroup(parentPosition) : this.startDragSingle(parentPosition);
         this._viewport.on('pointermove', this.handleDrag);
     }
 
@@ -131,7 +179,7 @@ export class Puzzle extends Container {
         return this._dragPiece;
     }
 
-    private dragSingle(parentPosition: Point) {
+    private startDragSingle(parentPosition: Point) {
         for (const piece of this.pieces.values()) {
             if (!piece.isSelected)
                 continue;
@@ -144,16 +192,22 @@ export class Puzzle extends Container {
         this._isGroupDrag = false;
     }
 
-    // TODO: Fix incorrect reordering with setChildIndex/2.
-    private dragGroup(parentPosition: Point) {
+    private startDragGroup(parentPosition: Point) {
+        const selectedPieces = []
+        const totalPieces = this.pieces.size - 1;
+
         for (const piece of this.pieces.values()) {
             if (!piece.isSelected)
                 continue;
-
-            this.setChildIndex(piece, this.pieces.size - 1);
+            
+            selectedPieces.push(piece);
             piece.startDrag(parentPosition);
         }
 
+        selectedPieces
+            .sort((left, right) => this.getChildIndex(left) > this.getChildIndex(right) ? -1 : 1)
+            .forEach((piece, index) => this.setChildIndex(piece, totalPieces - index))
+        
         this._isGroupDrag = true;
     }
 

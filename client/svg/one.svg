@@ -1,0 +1,7 @@
+<svg version="1.1" width="300" height="200" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="skyblue" />
+    <circle cx="50%" cy="50%" r="80" fill="green" />
+    <text x="95" y="120" font-size="60" texn-anchor="middle" fill="white">
+        SVG
+    </text>
+</svg>
