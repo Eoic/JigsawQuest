@@ -1,8 +1,9 @@
 import { Viewport } from 'pixi-viewport';
 import { PuzzlePiece } from './puzzle-piece.ts';
 import { SelectionBox } from './selection-box.ts';
-import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point, SimplePlane, Geometry, Mesh, Shader } from 'pixi.js';
-
+import vertexShader from '../shaders/vertex.vert';
+import fragmentShader from '../shaders/fragment.frag';
+import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point, Geometry, Mesh, Shader, Program, Graphics, RenderTexture, Sprite, Application } from 'pixi.js';
 
 export class Puzzle extends Container {
     private readonly _viewport: Viewport;
@@ -10,6 +11,7 @@ export class Puzzle extends Container {
     private readonly _pieces: Map<number, PuzzlePiece>;
     private _dragPiece: PuzzlePiece | null;
     private _isGroupDrag: boolean;
+    private _app: Application;
 
     public get pieces() {
         return this._pieces;
@@ -19,11 +21,12 @@ export class Puzzle extends Container {
         return this._dragPiece;
     }
 
-    constructor(viewport: Viewport, selectionBox: SelectionBox) {
+    constructor(app: Application, viewport: Viewport, selectionBox: SelectionBox) {
         super();
         this.sortableChildren = true;
         this.interactiveChildren = true;
         this.eventMode = 'dynamic';
+        this._app = app;
         this._pieces = new Map();
         this._dragPiece = null;
         this._isGroupDrag = false;
@@ -44,34 +47,54 @@ export class Puzzle extends Container {
     }
 
     private async _createPieces(imagePath: string) {
-        const gap = 15;
-        const size = 100;
-
         Assets.load(imagePath).then((texture: BaseTexture) => {
-            const puzzleHalfSize = (gap * 9 + 100 * 10) / 2;
-            const offsetX = this._viewport.worldWidth / 2 - puzzleHalfSize;
-            const offsetY = this._viewport.worldHeight / 2 - puzzleHalfSize;
+            const geometry = new Geometry();
 
-            for (let x = 0; x < 10; x++) {
-                for (let y = 0; y < 10; y++) {
-                    const rectangle = new Rectangle(size * x, size * y, size, size);
-                    const pieceTexture = new Texture(texture, rectangle);
-                    const piece = new PuzzlePiece(pieceTexture);
+            geometry.addAttribute('a_position', [0, 0, 100, 0, 0, 100, 100, 100], 2);
+            geometry.addAttribute('a_textureCoord', [0, 0, 1, 0, 0, 1, 1, 1], 2);
+            geometry.addIndex([0, 1, 2, 1, 3, 2]);
 
-                    piece.position.set(
-                        x * (size + gap),
-                        y * (size + gap),
-                    );
-
-                    this.addChild(piece);
-                    this._pieces.set(piece.uid, piece);
-                }
-            }
-
-            this.position.set(offsetX, offsetY);
-            this.calculateBounds();
-            this.getBounds();
+            const program = new Program(vertexShader, fragmentShader);
+            const shader = new Shader(program);
+            shader.uniforms.u_sampler = texture;
+            const mesh = new Mesh(geometry, shader);
+            mesh.scale.set(8, 8);
+            mesh.position.set(500, 300);
+            this.addChild(mesh);
         }).catch((error) => console.error(error));
+        // ---
+
+        // const gap = 15;
+        // const rows = 5;
+        // const cols = 5;
+        
+        // Assets.load(imagePath).then((texture: BaseTexture) => {
+        //     const pieceWidth = texture.width / rows;
+        //     const pieceHeight = texture.height / cols;
+        //     const puzzleHalfSize = (gap * (rows - 1) + pieceWidth * cols) / 2;
+        //     const offsetX = this._viewport.worldWidth / 2 - puzzleHalfSize;
+        //     const offsetY = this._viewport.worldHeight / 2 - puzzleHalfSize;
+
+        //     for (let x = 0; x < cols; x++) {
+        //         for (let y = 0; y < rows; y++) {
+        //             const rectangle = new Rectangle(pieceWidth * x, pieceHeight * y, pieceWidth, pieceHeight);
+        //             const pieceTexture = new Texture(texture, rectangle);
+        //             const piece = new PuzzlePiece(pieceTexture);
+
+        //             piece.position.set(
+        //                 x * (pieceWidth + gap),
+        //                 y * (pieceHeight + gap),
+        //             );
+
+        //             this.addChild(piece);
+        //             this._pieces.set(piece.uid, piece);
+        //         }
+        //     }
+
+        //     this.position.set(offsetX, offsetY);
+        //     this.calculateBounds();
+        //     this.getBounds();
+        // }).catch((error) => console.error(error));
     }
 
     private handleDragStart = (event: FederatedPointerEvent) => {

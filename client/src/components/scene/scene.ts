@@ -14,7 +14,7 @@ export class Scene {
         this._app = this.setupApp(document.body);
         this._viewport = this.setupViewport(this._app);
         this._selectionBox = new SelectionBox();
-        this._puzzle = new Puzzle(this._viewport, this._selectionBox);
+        this._puzzle = new Puzzle(this._app, this._viewport, this._selectionBox);
         this._app.stage.addChild(this._selectionBox);
         this._viewport.addChild(this._puzzle);
         this.setupEvents();
