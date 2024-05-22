@@ -1,7 +1,7 @@
 import { Viewport } from 'pixi-viewport';
 import { PuzzlePiece } from './puzzle-piece.ts';
 import { SelectionBox } from './selection-box.ts';
-import { Assets, Container, FederatedPointerEvent, Rectangle, Texture } from 'pixi.js';
+import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point } from 'pixi.js';
 
 export class Puzzle extends Container {
     private readonly _viewport: Viewport;
@@ -29,25 +29,24 @@ export class Puzzle extends Container {
         this._viewport = viewport;
         this._viewport.addChild(this);
         this._selectionBox = selectionBox;
-        this.handleDrag = this.handleDrag.bind(this);
 
         this._setupEvents();
         this._createPieces('puzzle.png');
     }
 
     private _setupEvents() {
-        this.on('pointerdown', this.handleDragStart.bind(this));
-        this.on('pointerup', this.handleDragEnd.bind(this));
-        this.on('pointerupoutside', this.handleDragEnd.bind(this));
-        this.on('pointerover', this.handleHoverStart.bind(this));
-        this.on('pointerout', this.handleHoverEnd.bind(this));
+        this.on('pointerdown', this.handleDragStart);
+        this.on('pointerup', this.handleDragEnd);
+        this.on('pointerupoutside', this.handleDragEnd);
+        this.on('pointerover', this.handleHoverStart);
+        this.on('pointerout', this.handleHoverEnd);
     }
 
-    private _createPieces(imagePath: string) {
+    private async _createPieces(imagePath: string) {
         const gap = 15;
         const size = 100;
 
-        Assets.load(imagePath).then((texture) => {
+        Assets.load(imagePath).then((texture: BaseTexture) => {
             const puzzleHalfSize = (gap * 9 + 100 * 10) / 2;
             const offsetX = this._viewport.worldWidth / 2 - puzzleHalfSize;
             const offsetY = this._viewport.worldHeight / 2 - puzzleHalfSize;
@@ -74,47 +73,18 @@ export class Puzzle extends Container {
         }).catch((error) => console.error(error));
     }
 
-    private handleDragStart(event: FederatedPointerEvent): void {
-        if (event.button !== 0)
-            return;
-
-        if (!(event.target instanceof PuzzlePiece))
+    private handleDragStart = (event: FederatedPointerEvent) => {
+        if (event.button !== 0 || !(event.target instanceof PuzzlePiece) || this.captureDragPiece(event.target) === null)
             return;
 
         event.stopPropagation();
+
         const parentPosition = event.getLocalPosition(this._viewport);
-        this._dragPiece = this._pieces.get(event.target.uid) || null;        
-        
-        if (!this._dragPiece)
-            return;
-
-        if (this._dragPiece.isSelected) {
-            for (const piece of this.pieces.values()) {
-                if (!piece.isSelected)
-                    continue;
-
-                this.setChildIndex(piece, this.pieces.size - 1);
-                piece.startDrag(parentPosition);
-            }
-
-            this._isGroupDrag = true;
-        } else {
-            for (const piece of this.pieces.values()) {
-                if (!piece.isSelected)
-                    continue;
-
-                piece.deselect();
-            }
-
-            this.setChildIndex(this._dragPiece, this.pieces.size - 1);
-            this._dragPiece.startDrag(parentPosition);
-            this._isGroupDrag = false;
-        }
-
+        this._dragPiece!.isSelected ? this.startDragGroup(parentPosition) : this.startDragSingle(parentPosition);
         this._viewport.on('pointermove', this.handleDrag);
     }
 
-    private handleDrag(event: FederatedPointerEvent) {
+    private handleDrag = (event: FederatedPointerEvent) => {
         if (!this._dragPiece)
             return;
 
@@ -128,7 +98,7 @@ export class Puzzle extends Container {
         }
     }
 
-    private handleDragEnd(event: FederatedPointerEvent) {
+    private handleDragEnd = (event: FederatedPointerEvent) => {
         if (!this._dragPiece)
             return;
 
@@ -146,23 +116,54 @@ export class Puzzle extends Container {
         this._dragPiece = null;
     }
 
-    private handleHoverStart(event: FederatedPointerEvent) {
-        if (this._dragPiece || this._selectionBox.isActive)
-            return;
-
-        if (!(event.target instanceof PuzzlePiece))
-            return;
-
-        event.target.startHover();
+    private handleHoverStart = (event: FederatedPointerEvent) => {
+        if (this.isHoverEventValid(event))
+            (event.target as PuzzlePiece).startHover();
     }
 
-    private handleHoverEnd(event: FederatedPointerEvent) {
-        if (this._dragPiece || this._selectionBox.isActive)
-            return;
+    private handleHoverEnd = (event: FederatedPointerEvent) => {
+        if (this.isHoverEventValid(event))
+            (event.target as PuzzlePiece).endHover();
+    }
 
-        if (!(event.target instanceof PuzzlePiece))
-            return;
+    private captureDragPiece(target: PuzzlePiece) {
+        this._dragPiece = this._pieces.get(target.uid) || null;
+        return this._dragPiece;
+    }
 
-        event.target.endHover();
+    private startDragSingle(parentPosition: Point) {
+        for (const piece of this.pieces.values()) {
+            if (!piece.isSelected)
+                continue;
+
+            piece.deselect();
+        }
+
+        this.setChildIndex(this._dragPiece!, this.pieces.size - 1);
+        this._dragPiece!.startDrag(parentPosition);
+        this._isGroupDrag = false;
+    }
+
+    private startDragGroup(parentPosition: Point) {
+        const selectedPieces = []
+        const totalPieces = this.pieces.size - 1;
+
+        for (const piece of this.pieces.values()) {
+            if (!piece.isSelected)
+                continue;
+            
+            selectedPieces.push(piece);
+            piece.startDrag(parentPosition);
+        }
+
+        selectedPieces
+            .sort((left, right) => this.getChildIndex(left) > this.getChildIndex(right) ? -1 : 1)
+            .forEach((piece, index) => this.setChildIndex(piece, totalPieces - index))
+        
+        this._isGroupDrag = true;
+    }
+
+    private isHoverEventValid(event: FederatedPointerEvent) {
+        return !this._dragPiece && !this._selectionBox.isActive && event.target instanceof PuzzlePiece;
     }
 }
