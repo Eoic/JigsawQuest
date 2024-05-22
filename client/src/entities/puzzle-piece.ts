@@ -6,6 +6,7 @@ export class PuzzlePiece extends Sprite implements Selectable {
     private readonly _uid: number;
     private _dragPosition: Point;
     private _isSelected: boolean;
+    private _isHovered: boolean;
 
     public get uid() {
         return this._uid;
@@ -13,6 +14,10 @@ export class PuzzlePiece extends Sprite implements Selectable {
 
     public get isSelected() {
         return this._isSelected;
+    }
+
+    public get isHovered() {
+        return this._isHovered;
     }
 
     public get dimensions() {
@@ -24,6 +29,7 @@ export class PuzzlePiece extends Sprite implements Selectable {
         this._uid = utils.uid();
         this._dragPosition = new Point();
         this._isSelected = false;
+        this._isHovered = false;
         this.eventMode = 'dynamic';
     }
 
@@ -41,6 +47,9 @@ export class PuzzlePiece extends Sprite implements Selectable {
 
         this.tint = new Color(0xFFFFFF);
         this._isSelected = false;
+
+        if (this._isHovered)
+            this.startHover();
     }
 
     public startDrag(parentPosition: Point) {
@@ -63,6 +72,7 @@ export class PuzzlePiece extends Sprite implements Selectable {
         if (this._isSelected)
             return;
 
+        this._isHovered = true;
         this.tint = new Color(PIECE_HOVER_TINT);
     }
 
@@ -70,6 +80,7 @@ export class PuzzlePiece extends Sprite implements Selectable {
         if (this._isSelected)
             return;
 
+        this._isHovered = false;
         this.tint = new Color(0xFFFFFF);
     }
 }
