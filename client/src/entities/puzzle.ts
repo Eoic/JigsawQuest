@@ -1,7 +1,8 @@
 import { Viewport } from 'pixi-viewport';
 import { PuzzlePiece } from './puzzle-piece.ts';
 import { SelectionBox } from './selection-box.ts';
-import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point } from 'pixi.js';
+import { Assets, BaseTexture, Container, FederatedPointerEvent, Rectangle, Texture, Point, SimplePlane, Geometry, Mesh, Shader } from 'pixi.js';
+
 
 export class Puzzle extends Container {
     private readonly _viewport: Viewport;
