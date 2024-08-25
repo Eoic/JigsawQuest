@@ -30,10 +30,9 @@
 * Piece Styles: Classic interlocking and other patterns.
 
 ### Additional Features
-* Monetization (Optional): Cosmetic items, image packs, hints/boosts.
-* Puzzle Sharing: Ability for players to share their creations with others.
+* Puzzle Sharing: Ability for players to share their puzzles / games with others.
 * Social Features: Friend lists, follow players, etc.
-* Events/Tournaments: Time-limited events and competitions.
+* Events / tournaments: Time-limited events and competitions.
 
 # Technologies
 ### Front-end
